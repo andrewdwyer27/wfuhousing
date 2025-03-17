@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -10,10 +10,12 @@ const RoomSelection = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [activeRoommates, setActiveRoommates] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState('1');
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
+  const [groupSelection, setGroupSelection] = useState(false);
   const [filters, setFilters] = useState({
     roomType: '',
     availability: 'available'
@@ -30,30 +32,53 @@ const RoomSelection = () => {
           // Get user data
           const userDoc = await getDoc(doc(db, 'users', authUser.uid));
           if (userDoc.exists()) {
+            const userData = userDoc.data();
             setUser({
               uid: authUser.uid,
-              ...userDoc.data()
+              ...userData
             });
-          }
+            
+            // Get active roommate connections
+            if (userData.roommateConnections && userData.roommateConnections.length > 0) {
+              // Fetch user details for each connection
+              const roommateDetails = await Promise.all(
+                userData.roommateConnections.map(async (uid) => {
+                  const roommateDoc = await getDoc(doc(db, 'users', uid));
+                  if (roommateDoc.exists()) {
+                    return {
+                      uid: uid,
+                      ...roommateDoc.data()
+                    };
+                  }
+                  return null;
+                })
+              );
+              
+              setActiveRoommates(roommateDetails.filter(roommate => roommate !== null));
+              
+              // Check if we should be in "group selection" mode
+              setGroupSelection(roommateDetails.length > 0);
+            }
 
-          // Get dorm data
-          if (dormId) {
-            // In a real app, we'd fetch this from Firestore
-            // For simplicity, using hardcoded data
-            setDorm({
-              id: dormId,
-              name: dormId === 'magnolia' ? 'Magnolia Residence Hall' : 
-                    dormId === 'taylor' ? 'Taylor Residence Hall' :
-                    dormId === 'collins' ? 'Collins Residence Hall' :
-                    'Bostwick Residence Hall',
-              floors: 4
-            });
+            // Get dorm data
+            if (dormId) {
+              // In a real app, we'd fetch this from Firestore
+              // For simplicity, using hardcoded data
+              setDorm({
+                id: dormId,
+                name: dormId === 'magnolia' ? 'Magnolia Residence Hall' : 
+                      dormId === 'taylor' ? 'Taylor Residence Hall' :
+                      dormId === 'collins' ? 'Collins Residence Hall' :
+                      'Bostwick Residence Hall',
+                floors: 4
+              });
 
-            // Get rooms data
-            // In a real app, we'd fetch this from Firestore
-            // For simplicity, using a subset of our previous magnolia rooms data
-            const roomsData = getMockRoomsData(dormId);
-            setRooms(roomsData);
+              // Get rooms data
+              // In a real app, we'd fetch this from Firestore
+              // For simplicity, using a subset of our previous magnolia rooms data
+              const roomsData = getMockRoomsData(dormId);
+              setRooms(roomsData);
+            }
           }
           
           setLoading(false);
@@ -119,24 +144,42 @@ const RoomSelection = () => {
     if (!selectedRoom || !user) return;
     
     try {
-      // In a real app, we would update the user's data in Firestore
-      // and update the room's availability
+      // Create room selection data object
+      const roomSelectionData = {
+        id: selectedRoom.id,
+        roomNumber: selectedRoom.roomNumber,
+        dormId: dormId,
+        dormName: dorm.name,
+        type: selectedRoom.type,
+        price: selectedRoom.price,
+        selectedAt: new Date().toISOString(),
+        selectedBy: user.uid
+      };
+      
+      // Update current user's room selection
       await updateDoc(doc(db, 'users', user.uid), {
-        selectedRoom: {
-          id: selectedRoom.id,
-          roomNumber: selectedRoom.roomNumber,
-          dormId: dormId,
-          dormName: dorm.name,
-          type: selectedRoom.type,
-          price: selectedRoom.price,
-          selectedAt: new Date().toISOString()
-        }
+        selectedRoom: roomSelectionData
       });
+      
+      // Update all roommates with the same room selection information
+      if (activeRoommates.length > 0) {
+        // Create a batch of promises to update all roommates
+        const updatePromises = activeRoommates.map(roommate => 
+          updateDoc(doc(db, 'users', roommate.uid), {
+            selectedRoom: roomSelectionData
+          })
+        );
+        
+        // Wait for all updates to complete
+        await Promise.all(updatePromises);
+      }
+      
+      // Update room availability in the database
+      // In a real app, you would update the room's status in Firestore
       
       setConfirmationOpen(false);
       setReservationSuccess(true);
       
-      // In a real app, we would also update the room's status in Firestore
     } catch (error) {
       console.error('Error selecting room:', error);
     }
@@ -157,6 +200,12 @@ const RoomSelection = () => {
     // Filter by availability
     if (filters.availability === 'available' && room.occupancyStatus !== 'available') {
       return false;
+    }
+    
+    // If in group selection mode, filter by capacity to ensure enough space for the group
+    if (groupSelection) {
+      const groupSize = activeRoommates.length + 1; // +1 for the current user
+      return room.capacity >= groupSize;
     }
     
     return true;
@@ -185,6 +234,19 @@ const RoomSelection = () => {
           </div>
           <h2 className="text-2xl font-bold mb-2">Room Reserved!</h2>
           <p className="mb-4">You've successfully reserved room {selectedRoom?.roomNumber} in {dorm?.name}.</p>
+          
+          {activeRoommates.length > 0 && (
+            <div className="mb-6">
+              <p className="font-semibold mb-2">This room has been assigned to you and your roommates:</p>
+              <ul className="list-disc list-inside">
+                {activeRoommates.map(roommate => (
+                  <li key={roommate.uid}>{roommate.firstName} {roommate.lastName}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm">Each of your roommates will see this room selection in their dashboard.</p>
+            </div>
+          )}
+          
           <p className="mb-6">A confirmation email will be sent to your Wake Forest email address.</p>
           <Link href="/dashboard" className="bg-yellow-600 hover:bg-yellow-700 text-black py-2 px-4 rounded font-semibold">
             Return to Dashboard
@@ -205,6 +267,24 @@ const RoomSelection = () => {
           Back to Dorms
         </Link>
       </div>
+      
+      {/* Roommate Group Information */}
+      {activeRoommates.length > 0 && (
+        <div className="bg-white rounded-md shadow-sm border border-green-200 p-6 mb-6">
+          <h2 className="text-xl font-bold mb-2">Group Selection Mode</h2>
+          <p className="mb-4">You are selecting a room for yourself and {activeRoommates.length} roommate{activeRoommates.length > 1 ? 's' : ''}.</p>
+          
+          <div className="bg-green-50 p-4 rounded-md">
+            <p className="font-semibold mb-2">Your Roommates:</p>
+            <ul className="list-disc list-inside">
+              {activeRoommates.map(roommate => (
+                <li key={roommate.uid}>{roommate.firstName} {roommate.lastName}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm">The room you select will be assigned to all members of your group.</p>
+          </div>
+        </div>
+      )}
       
       <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-2xl font-bold mb-2">{dorm?.name}</h2>
@@ -261,9 +341,17 @@ const RoomSelection = () => {
                       <p className="capitalize">{room.type} Room</p>
                       <p>Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'people'}</p>
                       <p>${room.price} per semester</p>
+                      
+                      {groupSelection && (
+                        <p className="mt-2 text-sm font-semibold">
+                          {room.capacity >= activeRoommates.length + 1 
+                            ? `Suitable for your group of ${activeRoommates.length + 1}` 
+                            : `Not enough space for your group of ${activeRoommates.length + 1}`}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      {room.occupancyStatus === 'available' ? (
+                      {room.occupancyStatus === 'available' && (!groupSelection || room.capacity >= activeRoommates.length + 1) ? (
                         <button
                           onClick={() => handleRoomSelect(room)}
                           className="bg-yellow-600 hover:bg-yellow-700 text-black py-1 px-3 rounded font-semibold"
@@ -287,8 +375,14 @@ const RoomSelection = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg max-w-md w-full">
             <h3 className="text-xl font-bold mb-4">Confirm Room Selection</h3>
-            <p className="mb-4">Are you sure you want to select Room {selectedRoom.roomNumber} in {dorm?.name}?</p>
-            <p className="mb-6">${selectedRoom.price} per semester</p>
+            <p className="mb-2">Are you sure you want to select Room {selectedRoom.roomNumber} in {dorm?.name}?</p>
+            <p className="mb-4">${selectedRoom.price} per semester</p>
+            
+            {activeRoommates.length > 0 && (
+              <div className="mb-4 bg-yellow-50 p-3 rounded-md">
+                <p className="font-semibold text-sm">This room will be assigned to you and your {activeRoommates.length} roommate{activeRoommates.length > 1 ? 's' : ''}.</p>
+              </div>
+            )}
             
             <div className="flex justify-end space-x-4">
               <button
