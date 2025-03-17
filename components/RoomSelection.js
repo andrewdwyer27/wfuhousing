@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -20,6 +20,8 @@ const RoomSelection = () => {
     roomType: '',
     availability: 'available'
   });
+  const [hasExistingRoom, setHasExistingRoom] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   const router = useRouter();
   const { dormId } = router.query;
@@ -38,6 +40,11 @@ const RoomSelection = () => {
               ...userData
             });
             
+            // Check if user already has a room selected
+            if (userData.selectedRoom) {
+              setHasExistingRoom(true);
+            }
+            
             // Get active roommate connections
             if (userData.roommateConnections && userData.roommateConnections.length > 0) {
               // Fetch user details for each connection
@@ -54,30 +61,46 @@ const RoomSelection = () => {
                 })
               );
               
-              setActiveRoommates(roommateDetails.filter(roommate => roommate !== null));
+              const validRoommates = roommateDetails.filter(roommate => roommate !== null);
+              setActiveRoommates(validRoommates);
               
               // Check if we should be in "group selection" mode
-              setGroupSelection(roommateDetails.length > 0);
+              setGroupSelection(validRoommates.length > 0);
+              
+              // Check if any roommate already has a room
+              const roommateWithRoom = validRoommates.find(roommate => roommate.selectedRoom);
+              if (roommateWithRoom) {
+                setHasExistingRoom(true);
+              }
             }
 
-            // Get dorm data
+            // Get dorm data from Firestore
             if (dormId) {
-              // In a real app, we'd fetch this from Firestore
-              // For simplicity, using hardcoded data
-              setDorm({
-                id: dormId,
-                name: dormId === 'magnolia' ? 'Magnolia Residence Hall' : 
-                      dormId === 'taylor' ? 'Taylor Residence Hall' :
-                      dormId === 'collins' ? 'Collins Residence Hall' :
-                      'Bostwick Residence Hall',
-                floors: 4
-              });
+              const dormDoc = await getDoc(doc(db, 'dorms', dormId));
+              if (dormDoc.exists()) {
+                setDorm({
+                  id: dormId,
+                  ...dormDoc.data()
+                });
+              } else {
+                console.error('Dorm not found in Firestore');
+                setLoading(false);
+                return;
+              }
 
-              // Get rooms data
-              // In a real app, we'd fetch this from Firestore
-              // For simplicity, using a subset of our previous magnolia rooms data
-              const roomsData = getMockRoomsData(dormId);
-              setRooms(roomsData);
+              // Fetch rooms data from Firestore
+              const roomsCollectionRef = collection(db, 'dorms', dormId, 'rooms');
+              const roomsSnapshot = await getDocs(roomsCollectionRef);
+              
+              if (!roomsSnapshot.empty) {
+                const roomsData = roomsSnapshot.docs.map(doc => ({
+                  id: doc.id,
+                  ...doc.data()
+                }));
+                setRooms(roomsData);
+              } else {
+                console.log('No rooms found for this dorm');
+              }
             }
           }
           
@@ -95,35 +118,6 @@ const RoomSelection = () => {
     return () => unsubscribe();
   }, [router, dormId]);
 
-  // Mock rooms data function
-  const getMockRoomsData = (dormId) => {
-    // This would normally come from Firestore
-    if (dormId === 'magnolia') {
-      return [
-        { id: '102A', roomNumber: '102A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available' },
-        { id: '102B', roomNumber: '102B', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available' },
-        { id: '102C', roomNumber: '102C', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available' },
-        { id: '102D', roomNumber: '102D', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available' },
-        { id: '113A', roomNumber: '113A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'unavailable' },
-        { id: '113B', roomNumber: '113B', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available' },
-        { id: '201A', roomNumber: '201A', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available' },
-        { id: '201B', roomNumber: '201B', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'available' },
-        { id: '201C', roomNumber: '201C', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'unavailable' },
-        { id: '301A', roomNumber: '301A', floor: '3', type: 'double', capacity: 2, price: 4700, occupancyStatus: 'available' },
-        { id: '301B', roomNumber: '301B', floor: '3', type: 'single', capacity: 1, price: 5200, occupancyStatus: 'available' },
-        { id: '401A', roomNumber: '401A', floor: '4', type: 'double', capacity: 2, price: 4800, occupancyStatus: 'available' },
-        { id: '401B', roomNumber: '401B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'unavailable' }
-      ];
-    } else {
-      // Generic rooms for other dorms
-      return [
-        { id: `${dormId}-101`, roomNumber: '101', floor: '1', type: 'double', capacity: 2, price: 4200, occupancyStatus: 'available' },
-        { id: `${dormId}-102`, roomNumber: '102', floor: '1', type: 'double', capacity: 2, price: 4200, occupancyStatus: 'available' },
-        { id: `${dormId}-201`, roomNumber: '201', floor: '2', type: 'single', capacity: 1, price: 4700, occupancyStatus: 'available' }
-      ];
-    }
-  };
-
   // Handler for filter changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -135,6 +129,11 @@ const RoomSelection = () => {
 
   // Handler for selecting a room
   const handleRoomSelect = (room) => {
+    if (hasExistingRoom) {
+      setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
+      return;
+    }
+    
     setSelectedRoom(room);
     setConfirmationOpen(true);
   };
@@ -144,6 +143,17 @@ const RoomSelection = () => {
     if (!selectedRoom || !user) return;
     
     try {
+      // Double check that no one in the group already has a room
+      if (hasExistingRoom) {
+        setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
+        setConfirmationOpen(false);
+        return;
+      }
+      
+      // Get all group members including the current user
+      const allGroupMembers = [user, ...activeRoommates];
+      const groupMemberIds = allGroupMembers.map(member => member.uid);
+      
       // Create room selection data object
       const roomSelectionData = {
         id: selectedRoom.id,
@@ -156,32 +166,124 @@ const RoomSelection = () => {
         selectedBy: user.uid
       };
       
-      // Update current user's room selection
-      await updateDoc(doc(db, 'users', user.uid), {
-        selectedRoom: roomSelectionData
+      // Use a batch to update multiple documents
+      const batch = writeBatch(db);
+      
+      // Update all user documents
+      allGroupMembers.forEach(member => {
+        const userRef = doc(db, 'users', member.uid);
+        batch.update(userRef, {
+          selectedRoom: roomSelectionData
+        });
       });
       
-      // Update all roommates with the same room selection information
-      if (activeRoommates.length > 0) {
-        // Create a batch of promises to update all roommates
-        const updatePromises = activeRoommates.map(roommate => 
-          updateDoc(doc(db, 'users', roommate.uid), {
-            selectedRoom: roomSelectionData
-          })
-        );
-        
-        // Wait for all updates to complete
-        await Promise.all(updatePromises);
-      }
+      // Update the room document
+      const roomRef = doc(db, 'dorms', dormId, 'rooms', selectedRoom.id);
+      batch.update(roomRef, {
+        occupancyStatus: 'unavailable',
+        occupants: groupMemberIds,
+        lastUpdated: new Date().toISOString()
+      });
       
-      // Update room availability in the database
-      // In a real app, you would update the room's status in Firestore
+      // Commit all updates in a single batch
+      await batch.commit();
+      
+      // Update local state to reflect changes
+      setRooms(prev => 
+        prev.map(room => 
+          room.id === selectedRoom.id 
+            ? { 
+                ...room, 
+                occupancyStatus: 'unavailable', 
+                occupants: groupMemberIds 
+              }
+            : room
+        )
+      );
       
       setConfirmationOpen(false);
       setReservationSuccess(true);
       
     } catch (error) {
       console.error('Error selecting room:', error);
+      setErrorMessage('An error occurred while selecting the room. Please try again.');
+      setConfirmationOpen(false);
+    }
+  };
+  
+  // Cancel existing room selection
+  const handleCancelSelection = async () => {
+    if (!user?.selectedRoom) return;
+    
+    try {
+      setLoading(true);
+      
+      // Get the existing room details
+      const existingRoom = user.selectedRoom;
+      
+      // Get all group members including the current user
+      const allGroupMembers = [user, ...activeRoommates];
+      
+      // Use a batch to update multiple documents
+      const batch = writeBatch(db);
+      
+      // Update all user documents to remove room selection
+      allGroupMembers.forEach(member => {
+        const userRef = doc(db, 'users', member.uid);
+        batch.update(userRef, {
+          selectedRoom: null
+        });
+      });
+      
+      // Update the room document to make it available again
+      const roomRef = doc(db, 'dorms', existingRoom.dormId, 'rooms', existingRoom.id);
+      batch.update(roomRef, {
+        occupancyStatus: 'available',
+        occupants: [],
+        lastUpdated: new Date().toISOString()
+      });
+      
+      // Commit all updates in a single batch
+      await batch.commit();
+      
+      // If the canceled room is in the current dorm, update local state
+      if (existingRoom.dormId === dormId) {
+        setRooms(prev => 
+          prev.map(room => 
+            room.id === existingRoom.id 
+              ? { 
+                  ...room, 
+                  occupancyStatus: 'available', 
+                  occupants: [] 
+                }
+              : room
+          )
+        );
+      }
+      
+      // Update local state
+      setHasExistingRoom(false);
+      setErrorMessage('');
+      
+      // Update user state
+      setUser(prev => ({
+        ...prev,
+        selectedRoom: null
+      }));
+      
+      // Update roommates state
+      setActiveRoommates(prev => 
+        prev.map(roommate => ({
+          ...roommate,
+          selectedRoom: null
+        }))
+      );
+      
+    } catch (error) {
+      console.error('Error canceling room selection:', error);
+      setErrorMessage('An error occurred while canceling your room selection. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -261,12 +363,41 @@ const RoomSelection = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">WakeRooms</h1>
         <Link 
-          href="/dorm-selection"
+          href="/dashboard"
           className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded"
         >
-          Back to Dorms
+          Back to Dashboard
         </Link>
       </div>
+      
+      {/* Error message display */}
+      {errorMessage && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md">
+          <p>{errorMessage}</p>
+        </div>
+      )}
+      
+      {/* Existing Room Warning/Cancellation */}
+      {hasExistingRoom && (
+        <div className="bg-yellow-100 border border-yellow-400 rounded-md p-6 mb-6">
+          <h2 className="text-xl font-bold mb-2">You Already Have a Room</h2>
+          <p className="mb-4">
+            {user?.selectedRoom ? (
+              <>You have already selected Room {user.selectedRoom.roomNumber} in {user.selectedRoom.dormName}.</>
+            ) : (
+              <>One of your roommates has already selected a room.</>
+            )}
+          </p>
+          <p className="mb-4">You must cancel your current selection before choosing a new room.</p>
+          <button
+            onClick={handleCancelSelection}
+            className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-semibold"
+            disabled={loading}
+          >
+            Cancel Current Room Selection
+          </button>
+        </div>
+      )}
       
       {/* Roommate Group Information */}
       {activeRoommates.length > 0 && (
@@ -354,7 +485,12 @@ const RoomSelection = () => {
                       {room.occupancyStatus === 'available' && (!groupSelection || room.capacity >= activeRoommates.length + 1) ? (
                         <button
                           onClick={() => handleRoomSelect(room)}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-black py-1 px-3 rounded font-semibold"
+                          className={`py-1 px-3 rounded font-semibold ${
+                            hasExistingRoom 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-yellow-600 hover:bg-yellow-700 text-black'
+                          }`}
+                          disabled={hasExistingRoom}
                         >
                           Select Room
                         </button>
@@ -383,6 +519,10 @@ const RoomSelection = () => {
                 <p className="font-semibold text-sm">This room will be assigned to you and your {activeRoommates.length} roommate{activeRoommates.length > 1 ? 's' : ''}.</p>
               </div>
             )}
+            
+            <div className="bg-blue-50 p-3 rounded-md mb-4">
+              <p className="text-sm"><strong>Note:</strong> Once selected, this room will become unavailable to other students.</p>
+            </div>
             
             <div className="flex justify-end space-x-4">
               <button
