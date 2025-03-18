@@ -83,7 +83,7 @@ const Dashboard = () => {
 
             <div className="max-w-4xl mx-auto p-4 pt-6">
                 <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-                    <h2 className="text-2xl font-bold mb-4 text-gray-900">Welcome, {user?.firstName || 'Student'}</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-gray-900">Welcome, {user?.firstName + " " + user?.lastName || 'Student'}</h2>
                     <p className="mb-6 text-gray-700">Use the links below to navigate the housing selection process.</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

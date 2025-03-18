@@ -894,7 +894,7 @@ const RoommateFinder = () => {
             </div>
             {/* Potential Roommates with Filters */}
             {profileComplete && (
-                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
                     <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1022,8 +1022,8 @@ const RoommateFinder = () => {
                                         type="button"
                                         onClick={() => toggleFilterInterest(interest)}
                                         className={`px-2 py-1 rounded-md text-xs transition duration-200 ${filterOptions.interests.includes(interest)
-                                                ? 'bg-yellow-600 text-black font-medium'
-                                                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                            ? 'bg-yellow-600 text-black font-medium'
+                                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                                             }`}
                                     >
                                         {interest}
