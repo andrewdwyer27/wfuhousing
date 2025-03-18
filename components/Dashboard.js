@@ -8,7 +8,47 @@ import Link from 'next/link';
 const Dashboard = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [timeSlotActive, setTimeSlotActive] = useState(false);
+    const [timeSlotInfo, setTimeSlotInfo] = useState(null);
     const router = useRouter();
+
+    // Check if the current time is within the user's time slot
+    const checkTimeSlot = (timeSlot) => {
+        if (!timeSlot) return false;
+
+        const now = new Date();
+        const startTime = new Date(timeSlot.startTime);
+        const endTime = new Date(timeSlot.endTime);
+
+        return now >= startTime && now <= endTime;
+    };
+
+    // This function is no longer used since we're formatting dates inline
+    // Kept for reference in case we need it elsewhere
+    const formatDateTime = (dateString) => {
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    };
+
+    // Calculate time remaining in time slot
+    const getTimeRemaining = (endTime) => {
+        const now = new Date();
+        const end = new Date(endTime);
+        const diffMs = end - now;
+
+        if (diffMs <= 0) return "Time slot expired";
+
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        return `${diffHrs} hr${diffHrs !== 1 ? 's' : ''} ${diffMins} min${diffMins !== 1 ? 's' : ''} remaining`;
+    };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
@@ -18,11 +58,19 @@ const Dashboard = () => {
                     const userDoc = await getDoc(doc(db, 'users', authUser.uid));
 
                     if (userDoc.exists()) {
+                        const userData = userDoc.data();
                         setUser({
                             uid: authUser.uid,
                             email: authUser.email,
-                            ...userDoc.data()
+                            ...userData
                         });
+
+                        // Check if user has an active time slot
+                        if (userData.timeSlot) {
+                            const isActive = checkTimeSlot(userData.timeSlot);
+                            setTimeSlotActive(isActive);
+                            setTimeSlotInfo(userData.timeSlot);
+                        }
                     } else {
                         setUser({
                             uid: authUser.uid,
@@ -112,24 +160,118 @@ const Dashboard = () => {
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
                         <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Housing Selection Timeline
+                            Room Selection Time Slot
                         </h2>
-                        <div className="space-y-3">
-                            <div className="flex items-center">
-                                <div className="w-3 h-3 bg-yellow-600 rounded-full mr-3"></div>
-                                <p className="text-gray-700"><span className="font-medium">Application Open:</span> March 1, 2025</p>
+                        
+                        {timeSlotInfo ? (
+                            <>
+                                {timeSlotActive ? (
+                                    <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+                                        <div className="flex items-start">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div>
+                                                <p className="text-green-800 font-medium mb-2">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
+                                                <p className="text-gray-700">
+                                                    <span className="font-semibold">
+                                                        {new Date(timeSlotInfo.startTime).toLocaleDateString('en-US', { 
+                                                            month: 'long', 
+                                                            day: 'numeric', 
+                                                            year: 'numeric' 
+                                                        })} at {new Date(timeSlotInfo.startTime).toLocaleTimeString('en-US', { 
+                                                            hour: '2-digit', 
+                                                            minute: '2-digit' 
+                                                        })} - {new Date(timeSlotInfo.endTime).toLocaleDateString('en-US', { 
+                                                            month: 'long', 
+                                                            day: 'numeric', 
+                                                            year: 'numeric' 
+                                                        })} at {new Date(timeSlotInfo.endTime).toLocaleTimeString('en-US', { 
+                                                            hour: '2-digit', 
+                                                            minute: '2-digit' 
+                                                        })}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    new Date(timeSlotInfo.startTime) > new Date() ? (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                                            <div className="flex items-start">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                    <p className="text-yellow-800 font-medium mb-2">Your time slot has not started yet.</p>
+                                                    <p className="text-yellow-700 text-sm mt-1">
+                                                        <span>
+                                                            {new Date(timeSlotInfo.startTime).toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })} at {new Date(timeSlotInfo.startTime).toLocaleTimeString('en-US', { 
+                                                                hour: '2-digit', 
+                                                                minute: '2-digit' 
+                                                            })} - {new Date(timeSlotInfo.endTime).toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })} at {new Date(timeSlotInfo.endTime).toLocaleTimeString('en-US', { 
+                                                                hour: '2-digit', 
+                                                                minute: '2-digit' 
+                                                            })}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                                            <div className="flex items-start">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                    <p className="text-red-800 font-medium mb-2">Your time slot has expired.</p>
+                                                    <p className="text-gray-700">
+                                                        <span className="font-semibold">
+                                                            {new Date(timeSlotInfo.startTime).toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })} at {new Date(timeSlotInfo.startTime).toLocaleTimeString('en-US', { 
+                                                                hour: '2-digit', 
+                                                                minute: '2-digit' 
+                                                            })} - {new Date(timeSlotInfo.endTime).toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })} at {new Date(timeSlotInfo.endTime).toLocaleTimeString('en-US', { 
+                                                                hour: '2-digit', 
+                                                                minute: '2-digit' 
+                                                            })}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                                
+                            </>
+                        ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                                <div className="flex items-start">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <p className="text-yellow-800">You have not been assigned a room selection time slot yet. Please check back later or contact housing services.</p>
+                                </div>
                             </div>
-                            <div className="flex items-center">
-                                <div className="w-3 h-3 bg-yellow-600 rounded-full mr-3"></div>
-                                <p className="text-gray-700"><span className="font-medium">Application Deadline:</span> March 15, 2025</p>
-                            </div>
-                            <div className="flex items-center">
-                                <div className="w-3 h-3 bg-yellow-600 rounded-full mr-3"></div>
-                                <p className="text-gray-700"><span className="font-medium">Room Selection Period:</span> April 1-10, 2025</p>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
