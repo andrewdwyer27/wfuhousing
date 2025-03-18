@@ -389,10 +389,10 @@ const TimeSlotAdmin = () => {
                             className="border border-gray-300 p-2 w-full"
                         >
                             <option value="">All Years</option>
-                            <option value="2025">2025 (Senior)</option>
-                            <option value="2026">2026 (Junior)</option>
-                            <option value="2027">2027 (Sophomore)</option>
-                            <option value="2028">2028 (Freshman)</option>
+                            <option value="2025 (Senior)">2025 (Senior)</option>
+                            <option value="2026 (Junior)">2026 (Junior)</option>
+                            <option value="2027 (Sophomore)">2027 (Sophomore)</option>
+                            <option value="2028 (Freshman)">2028 (Freshman)</option>
                         </select>
                     </div>
 
