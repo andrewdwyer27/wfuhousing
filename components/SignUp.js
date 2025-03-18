@@ -63,20 +63,20 @@ const SignUp = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-400 via-blue-600 to-blue-900">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-yellow-900">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white">WakeRoomsssss</h1>
+          <h1 className="text-4xl font-bold text-white">WakeRooms</h1>
         </div>
         
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Account Created!</h2>
           <p className="text-gray-600 mb-6">Your account has been created successfully.</p>
-          <Link href="/login" className="inline-block py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200">
+          <Link href="/login" className="inline-block py-2 px-6 bg-yellow-600 hover:bg-yellow-700 text-black font-medium rounded-md transition duration-200">
             Continue to Login
           </Link>
         </div>
@@ -85,7 +85,7 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-400 via-blue-600 to-blue-900 py-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-yellow-900 py-8">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-white">WakeRooms</h1>
       </div>
@@ -109,7 +109,7 @@ const SignUp = () => {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 required
               />
             </div>
@@ -120,7 +120,7 @@ const SignUp = () => {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 required
               />
             </div>
@@ -133,7 +133,7 @@ const SignUp = () => {
               type="text"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
             />
           </div>
@@ -147,7 +147,7 @@ const SignUp = () => {
               onChange={(e) => setEmail(e.target.value)}
               pattern=".+@wfu\.edu"
               title="Please enter a valid Wake Forest email address"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
             />
             <p className="text-xs text-gray-500 mt-1">Must be a valid wfu.edu email address</p>
@@ -160,7 +160,7 @@ const SignUp = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
               minLength={6}
             />
@@ -173,14 +173,14 @@ const SignUp = () => {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
             />
           </div>
           
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6"
+            className="w-full py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-black font-bold rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 mt-6"
             disabled={loading}
           >
             {loading ? 'Creating Account...' : 'Sign up'}
@@ -190,11 +190,18 @@ const SignUp = () => {
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
+            <Link href="/login" className="text-yellow-600 hover:text-yellow-800 font-medium">
               Log in
             </Link>
           </p>
         </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="w-full max-w-md text-center mt-6">
+        <p className="text-yellow-100 text-sm">
+          &copy; {new Date().getFullYear()} WakeRooms | <a href="#" className="text-yellow-200 hover:text-white">Privacy Policy</a> | <a href="#" className="text-yellow-200 hover:text-white">Terms of Service</a>
+        </p>
       </div>
     </div>
   );

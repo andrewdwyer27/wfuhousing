@@ -36,7 +36,7 @@ const LogIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-400 via-blue-600 to-blue-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-black to-yellow-900">
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-white">WakeRooms</h1>
       </div>
@@ -60,7 +60,7 @@ const LogIn = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
             />
           </div>
@@ -73,34 +73,41 @@ const LogIn = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
             />
           </div>
           
           <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
+            <Link href="/forgot-password" className="text-sm text-yellow-600 hover:text-yellow-800">
               Forgot password?
             </Link>
           </div>
           
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="w-full py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-black font-bold rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
             disabled={loading}
           >
-            Log in
+            {loading ? 'Logging in...' : 'Log in'}
           </button>
         </form>
         
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Don't have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+            <Link href="/signup" className="text-yellow-600 hover:text-yellow-800 font-medium">
               Sign up
             </Link>
           </p>
         </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="w-full max-w-md text-center mt-6">
+        <p className="text-yellow-100 text-sm">
+          &copy; {new Date().getFullYear()} WakeRooms | <a href="#" className="text-yellow-200 hover:text-white">Privacy Policy</a> | <a href="#" className="text-yellow-200 hover:text-white">Terms of Service</a>
+        </p>
       </div>
     </div>
   );
