@@ -16,7 +16,10 @@ const RoommateFinder = () => {
     interests: [],
     additionalInfo: ''
   });
+  
+  const [classYear, setClassYear] = useState('');
   const [potentialRoommates, setPotentialRoommates] = useState([]);
+  const [filteredRoommates, setFilteredRoommates] = useState([]);
   const [requests, setRequests] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [activeRoommates, setActiveRoommates] = useState([]);
@@ -27,6 +30,14 @@ const RoommateFinder = () => {
   const [confirmModal, setConfirmModal] = useState(false);
   const [roommateToRemove, setRoommateToRemove] = useState(null);
   const [expandedInfoIds, setExpandedInfoIds] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({
+    classYear: '',
+    studyHabits: '',
+    sleepSchedule: '',
+    cleanliness: '',
+    visitors: '',
+    interests: []
+  });
   const router = useRouter();
 
   const interestOptions = [
@@ -58,6 +69,11 @@ const RoommateFinder = () => {
               uid: authUser.uid,
               ...userData
             });
+            
+            // Set class year if exists
+            if (userData.classYear) {
+              setClassYear(userData.classYear);
+            }
             
             // Check if user has roommate preferences
             if (userData.roommatePreferences) {
@@ -143,6 +159,7 @@ const RoommateFinder = () => {
               );
             
             setPotentialRoommates(roommateList);
+            setFilteredRoommates(roommateList);
           }
           
           setLoading(false);
@@ -159,6 +176,93 @@ const RoommateFinder = () => {
     return () => unsubscribe();
   }, [router]);
 
+  // Apply filters to the potential roommates
+  useEffect(() => {
+    let result = [...potentialRoommates];
+    
+    // Filter by class year
+    if (filterOptions.classYear) {
+      result = result.filter(roommate => roommate.classYear === filterOptions.classYear);
+    }
+    
+    // Filter by study habits
+    if (filterOptions.studyHabits) {
+      result = result.filter(roommate => 
+        roommate.roommatePreferences?.studyHabits === filterOptions.studyHabits
+      );
+    }
+    
+    // Filter by sleep schedule
+    if (filterOptions.sleepSchedule) {
+      result = result.filter(roommate => 
+        roommate.roommatePreferences?.sleepSchedule === filterOptions.sleepSchedule
+      );
+    }
+    
+    // Filter by cleanliness
+    if (filterOptions.cleanliness) {
+      result = result.filter(roommate => 
+        roommate.roommatePreferences?.cleanliness === filterOptions.cleanliness
+      );
+    }
+    
+    // Filter by visitors preference
+    if (filterOptions.visitors) {
+      result = result.filter(roommate => 
+        roommate.roommatePreferences?.visitors === filterOptions.visitors
+      );
+    }
+    
+    // Filter by interests
+    if (filterOptions.interests && filterOptions.interests.length > 0) {
+      result = result.filter(roommate => 
+        filterOptions.interests.every(interest => 
+          roommate.roommatePreferences?.interests?.includes(interest)
+        )
+      );
+    }
+    
+    setFilteredRoommates(result);
+  }, [potentialRoommates, filterOptions]);
+
+  // Handle filter changes
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterOptions(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Toggle interest in filter
+  const toggleFilterInterest = (interest) => {
+    setFilterOptions(prev => {
+      if (prev.interests.includes(interest)) {
+        return {
+          ...prev,
+          interests: prev.interests.filter(i => i !== interest)
+        };
+      } else {
+        return {
+          ...prev,
+          interests: [...prev.interests, interest]
+        };
+      }
+    });
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setFilterOptions({
+      classYear: '',
+      studyHabits: '',
+      sleepSchedule: '',
+      cleanliness: '',
+      visitors: '',
+      interests: []
+    });
+  };
+
   // Handle preference form submission
   const handlePreferenceSubmit = async (e) => {
     e.preventDefault();
@@ -166,8 +270,9 @@ const RoommateFinder = () => {
     if (!user) return;
     
     try {
-      // Update preferences in Firestore
+      // Update both class year and preferences in Firestore
       await updateDoc(doc(db, 'users', user.uid), {
+        classYear: classYear,
         roommatePreferences: {
           ...preferences,
           interests: selectedInterests
@@ -219,6 +324,7 @@ const RoommateFinder = () => {
       // Update local state
       setMyRequests([...myRequests, roommate]);
       setPotentialRoommates(potentialRoommates.filter(r => r.uid !== roommate.uid));
+      setFilteredRoommates(filteredRoommates.filter(r => r.uid !== roommate.uid));
     } catch (error) {
       console.error('Error sending request:', error);
     }
@@ -289,6 +395,7 @@ const RoommateFinder = () => {
       // Update local state
       setMyRequests(myRequests.filter(r => r.uid !== requestee.uid));
       setPotentialRoommates([...potentialRoommates, requestee]);
+      setFilteredRoommates([...filteredRoommates, requestee]);
     } catch (error) {
       console.error('Error canceling request:', error);
     }
@@ -327,6 +434,7 @@ const RoommateFinder = () => {
       // Update local state
       setActiveRoommates(activeRoommates.filter(r => r.uid !== roommateToRemove.uid));
       setPotentialRoommates([...potentialRoommates, roommateToRemove]);
+      setFilteredRoommates([...filteredRoommates, roommateToRemove]);
       setErrorMessage('');
       
       // Close the modal and reset the roommate to remove
@@ -400,6 +508,11 @@ const RoommateFinder = () => {
                         </div>
                       </div>
                       
+                      {/* Display class year if available */}
+                      {roommate.classYear && (
+                        <p className="text-sm mt-2"><span className="font-semibold">Class Year:</span> {roommate.classYear}</p>
+                      )}
+                      
                       {/* Display room information if selected */}
                       {roommate.selectedRoom && (
                         <div className="mt-2 bg-blue-50 p-2 rounded">
@@ -472,6 +585,24 @@ const RoommateFinder = () => {
         
         {showPreferences ? (
           <form onSubmit={handlePreferenceSubmit}>
+            <div className="mb-4">
+              <label htmlFor="classYear" className="block mb-1">Class Year</label>
+              <select
+                id="classYear"
+                name="classYear"
+                value={classYear}
+                onChange={(e) => setClassYear(e.target.value)}
+                className="border border-gray-300 p-2 w-full"
+                required
+              >
+                <option value="">Select your class year...</option>
+                <option value="2025">2025 (Senior)</option>
+                <option value="2026">2026 (Junior)</option>
+                <option value="2027">2027 (Sophomore)</option>
+                <option value="2028">2028 (Freshman)</option>
+              </select>
+            </div>
+            
             <div className="mb-4">
               <label htmlFor="studyHabits" className="block mb-1">Study Habits</label>
               <select
@@ -602,6 +733,9 @@ const RoommateFinder = () => {
                     <h3 className="font-bold">{request.firstName} {request.lastName}</h3>
                     <p className="text-sm text-gray-600">Study: {request.roommatePreferences?.studyHabits || 'Not specified'}</p>
                     <p className="text-sm text-gray-600">Sleep: {request.roommatePreferences?.sleepSchedule || 'Not specified'}</p>
+                    {request.classYear && (
+                      <p className="text-sm text-gray-600">Class: {request.classYear}</p>
+                    )}
                   </div>
                   <div className="flex items-start space-x-2">
                     <button
@@ -635,6 +769,9 @@ const RoommateFinder = () => {
                   <div>
                     <h3 className="font-bold">{request.firstName} {request.lastName}</h3>
                     <p className="text-sm text-gray-600">{request.email}</p>
+                    {request.classYear && (
+                      <p className="text-sm text-gray-600">Class: {request.classYear}</p>
+                    )}
                   </div>
                   <button
                     onClick={() => cancelRequest(request)}
@@ -649,16 +786,192 @@ const RoommateFinder = () => {
         </div>
       )}
       
-      {/* Potential Roommates */}
+      {/* Potential Roommates with Class Year Filter */}
       {profileComplete && (
         <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold mb-4">Potential Roommates</h2>
           
-          {potentialRoommates.length === 0 ? (
-            <p>No potential roommates found at this time.</p>
+          {/* Filter Panel */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold">Filter Options</h3>
+              
+              {(filterOptions.classYear || filterOptions.studyHabits || filterOptions.sleepSchedule || 
+                filterOptions.cleanliness || filterOptions.visitors || filterOptions.interests.length > 0) && (
+                <button
+                  onClick={clearFilters}
+                  className="text-blue-600 hover:text-blue-800 underline text-sm"
+                >
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label htmlFor="classYearFilter" className="block mb-1 text-sm font-medium">Class Year</label>
+                <select
+                  id="classYearFilter"
+                  name="classYear"
+                  value={filterOptions.classYear}
+                  onChange={handleFilterChange}
+                  className="border border-gray-300 p-2 w-full text-sm rounded"
+                >
+                  <option value="">All Years</option>
+                  <option value="2025">2025 (Senior)</option>
+                  <option value="2026">2026 (Junior)</option>
+                  <option value="2027">2027 (Sophomore)</option>
+                  <option value="2028">2028 (Freshman)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="studyHabitsFilter" className="block mb-1 text-sm font-medium">Study Habits</label>
+                <select
+                  id="studyHabitsFilter"
+                  name="studyHabits"
+                  value={filterOptions.studyHabits}
+                  onChange={handleFilterChange}
+                  className="border border-gray-300 p-2 w-full text-sm rounded"
+                >
+                  <option value="">Any</option>
+                  <option value="quiet">I need complete quiet to study</option>
+                  <option value="music">I can study with music/background noise</option>
+                  <option value="anywhere">I can study anywhere</option>
+                  <option value="library">I prefer to study at the library</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="sleepScheduleFilter" className="block mb-1 text-sm font-medium">Sleep Schedule</label>
+                <select
+                  id="sleepScheduleFilter"
+                  name="sleepSchedule"
+                  value={filterOptions.sleepSchedule}
+                  onChange={handleFilterChange}
+                  className="border border-gray-300 p-2 w-full text-sm rounded"
+                >
+                  <option value="">Any</option>
+                  <option value="early">Early riser (before 8am)</option>
+                  <option value="regular">Regular hours (sleep 11pm-8am)</option>
+                  <option value="late">Night owl (up past midnight)</option>
+                  <option value="varies">Varies day to day</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="cleanlinessFilter" className="block mb-1 text-sm font-medium">Cleanliness</label>
+                <select
+                  id="cleanlinessFilter"
+                  name="cleanliness"
+                  value={filterOptions.cleanliness}
+                  onChange={handleFilterChange}
+                  className="border border-gray-300 p-2 w-full text-sm rounded"
+                >
+                  <option value="">Any</option>
+                  <option value="veryNeat">Very neat and organized</option>
+                  <option value="neat">Generally neat</option>
+                  <option value="casual">Casual, clean when needed</option>
+                  <option value="messy">Not very concerned with tidiness</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="visitorsFilter" className="block mb-1 text-sm font-medium">Visitors</label>
+                <select
+                  id="visitorsFilter"
+                  name="visitors"
+                  value={filterOptions.visitors}
+                  onChange={handleFilterChange}
+                  className="border border-gray-300 p-2 w-full text-sm rounded"
+                >
+                  <option value="">Any</option>
+                  <option value="often">Often have visitors/friends over</option>
+                  <option value="sometimes">Occasionally have visitors</option>
+                  <option value="rarely">Rarely have visitors</option>
+                  <option value="weekends">Only on weekends</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block mb-1 text-sm font-medium">Interest Filters (select to match)</label>
+              <div className="flex flex-wrap gap-1 mb-3">
+                {interestOptions.map(interest => (
+                  <button
+                    key={interest}
+                    type="button"
+                    onClick={() => toggleFilterInterest(interest)}
+                    className={`px-2 py-1 rounded text-xs ${
+                      filterOptions.interests.includes(interest)
+                        ? 'bg-yellow-600 text-black'
+                        : 'bg-gray-200 text-gray-800'
+                    }`}
+                  >
+                    {interest}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-4 text-sm">
+              <p>Showing <strong>{filteredRoommates.length}</strong> of <strong>{potentialRoommates.length}</strong> potential roommates</p>
+              
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600">Active filters:</span>
+                <div className="flex flex-wrap gap-1">
+                  {filterOptions.classYear && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Year: {filterOptions.classYear}
+                    </span>
+                  )}
+                  {filterOptions.studyHabits && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Study: {filterOptions.studyHabits === 'quiet' ? 'Needs quiet' :
+                            filterOptions.studyHabits === 'music' ? 'Music/noise OK' :
+                            filterOptions.studyHabits === 'anywhere' ? 'Anywhere' :
+                            filterOptions.studyHabits === 'library' ? 'Library' : ''}
+                    </span>
+                  )}
+                  {filterOptions.sleepSchedule && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Sleep: {filterOptions.sleepSchedule === 'early' ? 'Early riser' :
+                             filterOptions.sleepSchedule === 'regular' ? 'Regular hours' :
+                             filterOptions.sleepSchedule === 'late' ? 'Night owl' :
+                             filterOptions.sleepSchedule === 'varies' ? 'Varies' : ''}
+                    </span>
+                  )}
+                  {filterOptions.cleanliness && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Clean: {filterOptions.cleanliness === 'veryNeat' ? 'Very neat' :
+                              filterOptions.cleanliness === 'neat' ? 'Generally neat' :
+                              filterOptions.cleanliness === 'casual' ? 'Casual' :
+                              filterOptions.cleanliness === 'messy' ? 'Less tidy' : ''}
+                    </span>
+                  )}
+                  {filterOptions.visitors && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Visitors: {filterOptions.visitors === 'often' ? 'Often' :
+                                 filterOptions.visitors === 'sometimes' ? 'Occasionally' :
+                                 filterOptions.visitors === 'rarely' ? 'Rarely' :
+                                 filterOptions.visitors === 'weekends' ? 'Weekends' : ''}
+                    </span>
+                  )}
+                  {filterOptions.interests.length > 0 && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      Interests: {filterOptions.interests.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {filteredRoommates.length === 0 ? (
+            <p>No potential roommates found matching your filters.</p>
           ) : (
             <div className="space-y-6">
-              {potentialRoommates.map(roommate => (
+              {filteredRoommates.map(roommate => (
                 <div key={roommate.uid} className="border border-gray-200 p-4 rounded-md">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-lg">{roommate.firstName} {roommate.lastName}</h3>
@@ -676,6 +989,9 @@ const RoommateFinder = () => {
                       <p className="text-sm"><span className="font-semibold">Sleep Schedule:</span> {roommate.roommatePreferences?.sleepSchedule || 'Not specified'}</p>
                       <p className="text-sm"><span className="font-semibold">Cleanliness:</span> {roommate.roommatePreferences?.cleanliness || 'Not specified'}</p>
                       <p className="text-sm"><span className="font-semibold">Visitors:</span> {roommate.roommatePreferences?.visitors || 'Not specified'}</p>
+                      {roommate.classYear && (
+                        <p className="text-sm"><span className="font-semibold">Class Year:</span> {roommate.classYear}</p>
+                      )}
                     </div>
                     
                     <div>
