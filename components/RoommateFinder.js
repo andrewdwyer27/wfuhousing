@@ -24,7 +24,7 @@ const RoommateFinder = () => {
   const [myRequests, setMyRequests] = useState([]);
   const [activeRoommates, setActiveRoommates] = useState([]);
   const [profileComplete, setProfileComplete] = useState(false);
-  const [showPreferences, setShowPreferences] = useState(true);
+  const [showPreferences, setShowPreferences] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmModal, setConfirmModal] = useState(false);
@@ -77,10 +77,14 @@ const RoommateFinder = () => {
             
             // Check if user has roommate preferences
             if (userData.roommatePreferences) {
-              setPreferences(userData.roommatePreferences);
-              setSelectedInterests(userData.roommatePreferences.interests || []);
-              setProfileComplete(true);
-            }
+                setPreferences(userData.roommatePreferences);
+                setSelectedInterests(userData.roommatePreferences.interests || []);
+                setProfileComplete(true);
+                setShowPreferences(false); // Hide preferences form if already filled out
+              } else {
+                // Show preferences form if the user hasn't filled out preferences yet
+                setShowPreferences(true);
+              }
             
             // Get roommate requests
             if (userData.incomingRoommateRequests) {
@@ -596,10 +600,10 @@ const RoommateFinder = () => {
                 required
               >
                 <option value="">Select your class year...</option>
-                <option value="2025">2025 (Senior)</option>
-                <option value="2026">2026 (Junior)</option>
-                <option value="2027">2027 (Sophomore)</option>
-                <option value="2028">2028 (Freshman)</option>
+                <option value="2025 (Senior)">2025 (Senior)</option>
+                <option value="2026 (Junior)">2026 (Junior)</option>
+                <option value="2027 (Sophomore)">2027 (Sophomore)</option>
+                <option value="2028 (Freshman)">2028 (Freshman)</option>
               </select>
             </div>
             
@@ -614,10 +618,10 @@ const RoommateFinder = () => {
                 required
               >
                 <option value="">Select...</option>
-                <option value="quiet">I need complete quiet to study</option>
-                <option value="music">I can study with music/background noise</option>
-                <option value="anywhere">I can study anywhere</option>
-                <option value="library">I prefer to study at the library</option>
+                <option value="I need complete quiet to study">I need complete quiet to study</option>
+                <option value="I can study with music/background noise">I can study with music/background noise</option>
+                <option value="I can study anywhere">I can study anywhere</option>
+                <option value="I prefer to study at the library">I prefer to study at the library</option>
               </select>
             </div>
             
@@ -632,10 +636,10 @@ const RoommateFinder = () => {
                 required
               >
                 <option value="">Select...</option>
-                <option value="early">Early riser (before 8am)</option>
-                <option value="regular">Regular hours (sleep 11pm-8am)</option>
-                <option value="late">Night owl (up past midnight)</option>
-                <option value="varies">Varies day to day</option>
+                <option value="Early riser (before 8am)">Early riser (before 8am)</option>
+                <option value="Regular hours (sleep 11pm-8am)">Regular hours (sleep 11pm-8am)</option>
+                <option value="Night owl (up past midnight)">Night owl (up past midnight)</option>
+                <option value="Varies day to day">Varies day to day</option>
               </select>
             </div>
             
@@ -650,10 +654,10 @@ const RoommateFinder = () => {
                 required
               >
                 <option value="">Select...</option>
-                <option value="veryNeat">Very neat and organized</option>
-                <option value="neat">Generally neat</option>
-                <option value="casual">Casual, clean when needed</option>
-                <option value="messy">Not very concerned with tidiness</option>
+                <option value="Very neat and organized">Very neat and organized</option>
+                <option value="Generally neat">Generally neat</option>
+                <option value="Not very concerned with tidiness">Generally neat</option>
+                <option value="Not very concerned with tidiness">Not very concerned with tidiness</option>
               </select>
             </div>
             
@@ -668,10 +672,10 @@ const RoommateFinder = () => {
                 required
               >
                 <option value="">Select...</option>
-                <option value="often">Often have visitors/friends over</option>
-                <option value="sometimes">Occasionally have visitors</option>
-                <option value="rarely">Rarely have visitors</option>
-                <option value="weekends">Only on weekends</option>
+                <option value="Often have visitors/friends over">Often have visitors/friends over</option>
+                <option value="Occasionally have visitors">Occasionally have visitors</option>
+                <option value="Rarely have visitors">Rarely have visitors</option>
+                <option value="Only on weekends">Only on weekends</option>
               </select>
             </div>
             
@@ -818,10 +822,10 @@ const RoommateFinder = () => {
                   className="border border-gray-300 p-2 w-full text-sm rounded"
                 >
                   <option value="">All Years</option>
-                  <option value="2025">2025 (Senior)</option>
-                  <option value="2026">2026 (Junior)</option>
-                  <option value="2027">2027 (Sophomore)</option>
-                  <option value="2028">2028 (Freshman)</option>
+                  <option value="2025 (Senior)">2025 (Senior)</option>
+                  <option value="2026 (Junior)">2026 (Junior)</option>
+                  <option value="2027 (Sophomore)">2027 (Sophomore)</option>
+                  <option value="2028 (Freshman)">2028 (Freshman)</option>
                 </select>
               </div>
               
@@ -835,10 +839,10 @@ const RoommateFinder = () => {
                   className="border border-gray-300 p-2 w-full text-sm rounded"
                 >
                   <option value="">Any</option>
-                  <option value="quiet">I need complete quiet to study</option>
-                  <option value="music">I can study with music/background noise</option>
-                  <option value="anywhere">I can study anywhere</option>
-                  <option value="library">I prefer to study at the library</option>
+                  <option value="I need complete quiet to study">I need complete quiet to study</option>
+                  <option value="I can study with music/background noise">I can study with music/background noise</option>
+                  <option value="I can study anywhere">I can study anywhere</option>
+                  <option value="I prefer to study at the library">I prefer to study at the library</option>
                 </select>
               </div>
               
@@ -852,10 +856,10 @@ const RoommateFinder = () => {
                   className="border border-gray-300 p-2 w-full text-sm rounded"
                 >
                   <option value="">Any</option>
-                  <option value="early">Early riser (before 8am)</option>
-                  <option value="regular">Regular hours (sleep 11pm-8am)</option>
-                  <option value="late">Night owl (up past midnight)</option>
-                  <option value="varies">Varies day to day</option>
+                  <option value="Early riser (before 8am)">Early riser (before 8am)</option>
+                  <option value="Regular hours (sleep 11pm-8am)">Regular hours (sleep 11pm-8am)</option>
+                  <option value="Night owl (up past midnight)">Night owl (up past midnight)</option>
+                  <option value="Varies day to day">Varies day to day</option>
                 </select>
               </div>
               
@@ -869,10 +873,10 @@ const RoommateFinder = () => {
                   className="border border-gray-300 p-2 w-full text-sm rounded"
                 >
                   <option value="">Any</option>
-                  <option value="veryNeat">Very neat and organized</option>
-                  <option value="neat">Generally neat</option>
-                  <option value="casual">Casual, clean when needed</option>
-                  <option value="messy">Not very concerned with tidiness</option>
+                  <option value="Very neat and organized">Very neat and organized</option>
+                  <option value="Generally neat">Generally neat</option>
+                  <option value="Casual, clean when needed">Casual, clean when needed</option>
+                  <option value="Not very concerned with tidiness">Not very concerned with tidiness</option>
                 </select>
               </div>
               
@@ -886,10 +890,10 @@ const RoommateFinder = () => {
                   className="border border-gray-300 p-2 w-full text-sm rounded"
                 >
                   <option value="">Any</option>
-                  <option value="often">Often have visitors/friends over</option>
-                  <option value="sometimes">Occasionally have visitors</option>
-                  <option value="rarely">Rarely have visitors</option>
-                  <option value="weekends">Only on weekends</option>
+                  <option value="Often have visitors/friends over">Often have visitors/friends over</option>
+                  <option value="Occasionally have visitors">Occasionally have visitors</option>
+                  <option value="Rarely have visitors">Rarely have visitors</option>
+                  <option value="Only on weekends">Only on weekends</option>
                 </select>
               </div>
             </div>
@@ -927,34 +931,22 @@ const RoommateFinder = () => {
                   )}
                   {filterOptions.studyHabits && (
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
-                      Study: {filterOptions.studyHabits === 'quiet' ? 'Needs quiet' :
-                            filterOptions.studyHabits === 'music' ? 'Music/noise OK' :
-                            filterOptions.studyHabits === 'anywhere' ? 'Anywhere' :
-                            filterOptions.studyHabits === 'library' ? 'Library' : ''}
+                      Study: {filterOptions.studyHabits}
                     </span>
                   )}
                   {filterOptions.sleepSchedule && (
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
-                      Sleep: {filterOptions.sleepSchedule === 'early' ? 'Early riser' :
-                             filterOptions.sleepSchedule === 'regular' ? 'Regular hours' :
-                             filterOptions.sleepSchedule === 'late' ? 'Night owl' :
-                             filterOptions.sleepSchedule === 'varies' ? 'Varies' : ''}
+                      Sleep: {filterOptions.sleepSchedule}
                     </span>
                   )}
                   {filterOptions.cleanliness && (
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
-                      Clean: {filterOptions.cleanliness === 'veryNeat' ? 'Very neat' :
-                              filterOptions.cleanliness === 'neat' ? 'Generally neat' :
-                              filterOptions.cleanliness === 'casual' ? 'Casual' :
-                              filterOptions.cleanliness === 'messy' ? 'Less tidy' : ''}
+                      Clean: {filterOptions.cleanliness}
                     </span>
                   )}
                   {filterOptions.visitors && (
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
-                      Visitors: {filterOptions.visitors === 'often' ? 'Often' :
-                                 filterOptions.visitors === 'sometimes' ? 'Occasionally' :
-                                 filterOptions.visitors === 'rarely' ? 'Rarely' :
-                                 filterOptions.visitors === 'weekends' ? 'Weekends' : ''}
+                      Visitors: {filterOptions.visitors}
                     </span>
                   )}
                   {filterOptions.interests.length > 0 && (

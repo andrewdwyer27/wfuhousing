@@ -214,6 +214,7 @@ const TimeSlotAdmin = () => {
         }
     };
 
+
     // Clear time slots for selected users
     const clearTimeSlots = async () => {
         if (selectedUsers.length === 0) {
