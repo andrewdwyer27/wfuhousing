@@ -501,8 +501,8 @@ const RoommateFinder = () => {
                     </div>
                 )}
 
-{/* Roommate Preferences Form */}
-<div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+                {/* Roommate Preferences Form */}
+                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold text-gray-900 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -679,7 +679,7 @@ const RoommateFinder = () => {
                         </div>
                     ) : null}
                 </div>
-                
+
                 {/* Active Roommates Section */}
                 {activeRoommates.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
@@ -689,63 +689,26 @@ const RoommateFinder = () => {
                             </svg>
                             Active Roommates ({activeRoommates.length})
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
                             {activeRoommates.map(roommate => {
                                 // Check if either user has a room selected
                                 const hasRoom = user?.selectedRoom || roommate.selectedRoom;
 
                                 return (
                                     <div key={roommate.uid} className="border border-green-200 bg-green-50 p-5 rounded-lg">
-                                        <div className="flex justify-between items-start">
+                                        <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h3 className="font-bold text-lg text-gray-900">{roommate.firstName} {roommate.lastName}</h3>
                                                 <p className="text-sm text-gray-600">{roommate.email}</p>
-
-                                                <div className="mt-3 space-y-2">
-                                                    <p className="text-sm"><span className="font-semibold text-gray-700">Study Habits:</span> {roommate.roommatePreferences?.studyHabits || 'Not specified'}</p>
-                                                    <p className="text-sm"><span className="font-semibold text-gray-700">Sleep Schedule:</span> {roommate.roommatePreferences?.sleepSchedule || 'Not specified'}</p>
-                                                    <p className="text-sm"><span className="font-semibold text-gray-700">Cleanliness:</span> {roommate.roommatePreferences?.cleanliness || 'Not specified'}</p>
-                                                    <p className="text-sm"><span className="font-semibold text-gray-700">Visitors:</span> {roommate.roommatePreferences?.visitors || 'Not specified'}</p>
-                                                </div>
-
-                                                {/* Display class year if available */}
-                                                {roommate.classYear && (
-                                                    <p className="text-sm mt-2"><span className="font-semibold">Class Year:</span> {roommate.classYear}</p>
-                                                )}
-
-                                                {/* Display room information if selected */}
-                                                {roommate.selectedRoom && (
-                                                    <div className="mt-3 bg-blue-50 p-3 rounded-md border border-blue-100">
-                                                        <p className="text-sm flex items-center">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                            </svg>
-                                                            <span className="font-semibold">Room:</span> {roommate.selectedRoom.roomNumber} in {roommate.selectedRoom.dormName}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {roommate.roommatePreferences?.interests && roommate.roommatePreferences.interests.length > 0 && (
-                                                    <div className="mt-3">
-                                                        <p className="text-sm font-semibold text-gray-700">Interests:</p>
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {roommate.roommatePreferences.interests.map(interest => (
-                                                                <span key={interest} className="bg-green-100 px-2 py-0.5 rounded text-xs text-green-800">
-                                                                    {interest}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                             <div>
                                                 {hasRoom ? (
                                                     <button
                                                         disabled
-                                                        className="bg-gray-300 text-gray-500 py-1 px-3 rounded text-sm cursor-not-allowed"
+                                                        className="bg-gray-300 text-gray-500 py-1 px-4 rounded text-sm cursor-not-allowed flex items-center"
                                                         title="Cannot remove roommate while a room is selected"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                         </svg>
                                                         Remove
@@ -753,9 +716,9 @@ const RoommateFinder = () => {
                                                 ) : (
                                                     <button
                                                         onClick={() => openRemoveConfirmation(roommate)}
-                                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-sm transition duration-200"
+                                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-4 rounded text-sm transition duration-200 flex items-center"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                         </svg>
                                                         Remove
@@ -763,6 +726,68 @@ const RoommateFinder = () => {
                                                 )}
                                             </div>
                                         </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-8 mt-4">
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                </svg>
+                                                <span className="text-gray-700"><span className="font-medium">Study Habits:</span> {roommate.roommatePreferences?.studyHabits || 'Not specified'}</span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                                </svg>
+                                                <span className="text-gray-700"><span className="font-medium">Sleep Schedule:</span> {roommate.roommatePreferences?.sleepSchedule || 'Not specified'}</span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="text-gray-700"><span className="font-medium">Cleanliness:</span> {roommate.roommatePreferences?.cleanliness || 'Not specified'}</span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                <span className="text-gray-700"><span className="font-medium">Visitors:</span> {roommate.roommatePreferences?.visitors || 'Not specified'}</span>
+                                            </div>
+                                            {roommate.classYear && (
+                                                <div className="flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                                                        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                                                    </svg>
+                                                    <span className="text-gray-700"><span className="font-medium">Class Year:</span> {roommate.classYear}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Display room information if selected */}
+                                        {roommate.selectedRoom && (
+                                            <div className="mt-3 bg-blue-50 p-3 rounded-md border border-blue-100 max-w-md">
+                                                <p className="text-sm flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                    <span className="font-semibold">Room:</span> {roommate.selectedRoom.roomNumber} in {roommate.selectedRoom.dormName}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {roommate.roommatePreferences?.interests && roommate.roommatePreferences.interests.length > 0 && (
+                                            <div className="mt-4">
+                                                <p className="text-gray-700 font-medium">Interests:</p>
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {roommate.roommatePreferences.interests.map(interest => (
+                                                        <span key={interest} className="bg-green-100 px-3 py-1 rounded text-sm text-green-800">
+                                                            {interest}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -785,8 +810,6 @@ const RoommateFinder = () => {
                     </div>
                 )}
 
-                
-
                 {/* Roommate Requests (Incoming) */}
                 {requests.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
@@ -799,12 +822,12 @@ const RoommateFinder = () => {
                         <div className="space-y-4">
                             {requests.map(request => (
                                 <div key={request.uid} className="border border-yellow-200 bg-yellow-50 p-5 rounded-lg">
-                                    <div className="flex justify-between items-start mb-3">
+                                    <div className="flex justify-between items-start mb-4">
                                         <h3 className="font-bold text-lg text-gray-900">{request.firstName} {request.lastName}</h3>
-                                        <div className="flex items-start space-x-2">
+                                        <div className="flex space-x-2">
                                             <button
                                                 onClick={() => acceptRequest(request)}
-                                                className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-md text-sm font-medium transition duration-200 flex items-center"
+                                                className="bg-green-600 hover:bg-green-700 text-white py-1 px-4 rounded text-sm font-medium transition duration-200 flex items-center"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -813,7 +836,7 @@ const RoommateFinder = () => {
                                             </button>
                                             <button
                                                 onClick={() => declineRequest(request)}
-                                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md text-sm font-medium transition duration-200 flex items-center"
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-4 rounded text-sm font-medium transition duration-200 flex items-center"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -823,49 +846,53 @@ const RoommateFinder = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-8">
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Study Habits:</span> {request.roommatePreferences?.studyHabits || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Study Habits:</span> {request.roommatePreferences?.studyHabits || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Sleep Schedule:</span> {request.roommatePreferences?.sleepSchedule || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Sleep Schedule:</span> {request.roommatePreferences?.sleepSchedule || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Cleanliness:</span> {request.roommatePreferences?.cleanliness || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Cleanliness:</span> {request.roommatePreferences?.cleanliness || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Visitors:</span> {request.roommatePreferences?.visitors || 'Not specified'}
-                                        </p>
+                                            <span className="text-gray-700"><span className="font-medium">Visitors:</span> {request.roommatePreferences?.visitors || 'Not specified'}</span>
+                                        </div>
+
                                         {request.classYear && (
-                                            <p className="text-sm flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                                                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
                                                 </svg>
-                                                <span className="font-semibold text-gray-700">Class Year:</span> {request.classYear}
-                                            </p>
+                                                <span className="text-gray-700"><span className="font-medium">Class Year:</span> {request.classYear}</span>
+                                            </div>
                                         )}
                                     </div>
 
                                     {request.roommatePreferences?.interests && request.roommatePreferences.interests.length > 0 && (
                                         <div className="mt-4">
-                                            <p className="text-sm font-semibold text-gray-700">Interests:</p>
-                                            <div className="flex flex-wrap gap-1 mt-1">
+                                            <p className="text-gray-700 font-medium">Interests:</p>
+                                            <div className="flex flex-wrap gap-2 mt-1">
                                                 {request.roommatePreferences.interests.map(interest => (
-                                                    <span key={interest} className="bg-yellow-100 px-2 py-0.5 rounded text-xs text-yellow-800">
+                                                    <span key={interest} className="bg-yellow-100 px-3 py-1 rounded text-sm text-yellow-800">
                                                         {interest}
                                                     </span>
                                                 ))}
@@ -878,7 +905,7 @@ const RoommateFinder = () => {
                     </div>
                 )}
 
-                {/* My Sent Requests (Outgoing) - UPDATED to match the new design */}
+                {/* My Sent Requests (Outgoing) - Updated to match incoming design */}
                 {myRequests.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
                         <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
@@ -890,62 +917,68 @@ const RoommateFinder = () => {
                         <div className="space-y-4">
                             {myRequests.map(request => (
                                 <div key={request.uid} className="border border-yellow-200 bg-yellow-50 p-5 rounded-lg">
-                                    <div className="flex justify-between items-start mb-3">
+                                    <div className="flex justify-between items-start mb-4">
                                         <h3 className="font-bold text-lg text-gray-900">{request.firstName} {request.lastName}</h3>
-                                        <button
-                                            onClick={() => cancelRequest(request)}
-                                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md text-sm font-medium transition duration-200 flex items-center"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                            Cancel Request
-                                        </button>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => cancelRequest(request)}
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-4 rounded text-sm font-medium transition duration-200 flex items-center"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                Cancel Request
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-8">
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Study Habits:</span> {request.roommatePreferences?.studyHabits || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Study Habits:</span> {request.roommatePreferences?.studyHabits || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Sleep Schedule:</span> {request.roommatePreferences?.sleepSchedule || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Sleep Schedule:</span> {request.roommatePreferences?.sleepSchedule || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Cleanliness:</span> {request.roommatePreferences?.cleanliness || 'Not specified'}
-                                        </p>
-                                        <p className="text-sm flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <span className="text-gray-700"><span className="font-medium">Cleanliness:</span> {request.roommatePreferences?.cleanliness || 'Not specified'}</span>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                             </svg>
-                                            <span className="font-semibold text-gray-700">Visitors:</span> {request.roommatePreferences?.visitors || 'Not specified'}
-                                        </p>
+                                            <span className="text-gray-700"><span className="font-medium">Visitors:</span> {request.roommatePreferences?.visitors || 'Not specified'}</span>
+                                        </div>
+
                                         {request.classYear && (
-                                            <p className="text-sm flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path d="M12 14l9-5-9-5-9 5 9 5z" />
                                                     <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
                                                 </svg>
-                                                <span className="font-semibold text-gray-700">Class Year:</span> {request.classYear}
-                                            </p>
+                                                <span className="text-gray-700"><span className="font-medium">Class Year:</span> {request.classYear}</span>
+                                            </div>
                                         )}
                                     </div>
 
                                     {request.roommatePreferences?.interests && request.roommatePreferences.interests.length > 0 && (
                                         <div className="mt-4">
-                                            <p className="text-sm font-semibold text-gray-700">Interests:</p>
-                                            <div className="flex flex-wrap gap-1 mt-1">
+                                            <p className="text-gray-700 font-medium">Interests:</p>
+                                            <div className="flex flex-wrap gap-2 mt-1">
                                                 {request.roommatePreferences.interests.map(interest => (
-                                                    <span key={interest} className="bg-yellow-100 px-2 py-0.5 rounded text-xs text-yellow-800">
+                                                    <span key={interest} className="bg-yellow-100 px-3 py-1 rounded text-sm text-yellow-800">
                                                         {interest}
                                                     </span>
                                                 ))}
