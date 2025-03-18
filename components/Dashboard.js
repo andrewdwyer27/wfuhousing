@@ -110,7 +110,7 @@ const Dashboard = () => {
         {user?.selectedRoom ? (
           <div>
             <p className="mb-2">You have selected a room:</p>
-            <p className="font-semibold">{user.selectedRoom.roomNumber} in {user.selectedRoom.buildingId}</p>
+            <p className="font-semibold">{user.selectedRoom.roomNumber} in {user.selectedRoom.dormName}</p>
           </div>
         ) : (
           <p>You have not selected a room yet.</p>

@@ -22,9 +22,48 @@ const RoomSelection = () => {
   });
   const [hasExistingRoom, setHasExistingRoom] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [timeSlotActive, setTimeSlotActive] = useState(false);
+  const [timeSlotInfo, setTimeSlotInfo] = useState(null);
   
   const router = useRouter();
   const { dormId } = router.query;
+
+  // Check if the current time is within the user's time slot
+  const checkTimeSlot = (timeSlot) => {
+    if (!timeSlot) return false;
+    
+    const now = new Date();
+    const startTime = new Date(timeSlot.startTime);
+    const endTime = new Date(timeSlot.endTime);
+    
+    return now >= startTime && now <= endTime;
+  };
+
+  // Format date for display
+  const formatDateTime = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  // Calculate time remaining in time slot
+  const getTimeRemaining = (endTime) => {
+    const now = new Date();
+    const end = new Date(endTime);
+    const diffMs = end - now;
+    
+    if (diffMs <= 0) return "Time slot expired";
+    
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${diffHrs} hr${diffHrs !== 1 ? 's' : ''} ${diffMins} min${diffMins !== 1 ? 's' : ''} remaining`;
+  };
 
   // Check authentication and fetch dorm and rooms data
   useEffect(() => {
@@ -43,6 +82,13 @@ const RoomSelection = () => {
             // Check if user already has a room selected
             if (userData.selectedRoom) {
               setHasExistingRoom(true);
+            }
+            
+            // Check if user has an active time slot
+            if (userData.timeSlot) {
+              const isActive = checkTimeSlot(userData.timeSlot);
+              setTimeSlotActive(isActive);
+              setTimeSlotInfo(userData.timeSlot);
             }
             
             // Get active roommate connections
@@ -71,6 +117,18 @@ const RoomSelection = () => {
               const roommateWithRoom = validRoommates.find(roommate => roommate.selectedRoom);
               if (roommateWithRoom) {
                 setHasExistingRoom(true);
+              }
+              
+              // For group selection, at least one person in the group must have an active time slot
+              if (!isActive) {
+                const activeRoommateTimeSlot = validRoommates.find(roommate => 
+                  roommate.timeSlot && checkTimeSlot(roommate.timeSlot)
+                );
+                
+                if (activeRoommateTimeSlot) {
+                  setTimeSlotActive(true);
+                  setTimeSlotInfo(activeRoommateTimeSlot.timeSlot);
+                }
               }
             }
 
@@ -129,6 +187,12 @@ const RoomSelection = () => {
 
   // Handler for selecting a room
   const handleRoomSelect = (room) => {
+    // Check if user has an active time slot
+    if (!timeSlotActive) {
+      setErrorMessage("You cannot select a room because it's not your assigned time slot yet.");
+      return;
+    }
+    
     if (hasExistingRoom) {
       setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
       return;
@@ -146,6 +210,13 @@ const RoomSelection = () => {
       // Double check that no one in the group already has a room
       if (hasExistingRoom) {
         setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
+        setConfirmationOpen(false);
+        return;
+      }
+      
+      // Double check time slot
+      if (!timeSlotActive) {
+        setErrorMessage("Your time slot is not active. You cannot select a room at this time.");
         setConfirmationOpen(false);
         return;
       }
@@ -377,6 +448,27 @@ const RoomSelection = () => {
         </div>
       )}
       
+      {/* Time Slot Information */}
+      <div className={`mb-6 p-4 rounded-md border ${timeSlotActive ? 'bg-green-50 border-green-400' : 'bg-yellow-50 border-yellow-400'}`}>
+        <h2 className="text-lg font-bold mb-2">Room Selection Time Slot</h2>
+        {timeSlotInfo ? (
+          <div>
+            <p className="mb-1">Your assigned time slot: <span className="font-semibold">{formatDateTime(timeSlotInfo.startTime)} - {formatDateTime(timeSlotInfo.endTime)}</span></p>
+            {timeSlotActive ? (
+              <p className="text-green-700 font-semibold">✓ Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
+            ) : (
+              new Date(timeSlotInfo.startTime) > new Date() ? (
+                <p className="text-yellow-700">Your time slot has not started yet. Please return during your assigned time.</p>
+              ) : (
+                <p className="text-red-700">Your time slot has expired. You may still select a room if available.</p>
+              )
+            )}
+          </div>
+        ) : (
+          <p className="text-yellow-700">You have not been assigned a room selection time slot yet. Please check back later or contact housing services.</p>
+        )}
+      </div>
+      
       {/* Existing Room Warning/Cancellation */}
       {hasExistingRoom && (
         <div className="bg-yellow-100 border border-yellow-400 rounded-md p-6 mb-6">
@@ -420,6 +512,12 @@ const RoomSelection = () => {
       <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-2xl font-bold mb-2">{dorm?.name}</h2>
         <p className="mb-4">Select a room from the available options below.</p>
+        
+        {!timeSlotActive && (
+          <div className="mb-6 bg-yellow-50 p-4 rounded-md border border-yellow-300">
+            <p className="font-semibold text-yellow-800">Note: You are currently browsing rooms outside your assigned time slot. You can view the rooms, but you cannot select one until your time slot begins.</p>
+          </div>
+        )}
         
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-4">
@@ -486,11 +584,11 @@ const RoomSelection = () => {
                         <button
                           onClick={() => handleRoomSelect(room)}
                           className={`py-1 px-3 rounded font-semibold ${
-                            hasExistingRoom 
+                            hasExistingRoom || !timeSlotActive
                               ? 'bg-gray-400 cursor-not-allowed' 
                               : 'bg-yellow-600 hover:bg-yellow-700 text-black'
                           }`}
-                          disabled={hasExistingRoom}
+                          disabled={hasExistingRoom || !timeSlotActive}
                         >
                           Select Room
                         </button>

@@ -19,10 +19,14 @@ const RoommateFinder = () => {
   const [potentialRoommates, setPotentialRoommates] = useState([]);
   const [requests, setRequests] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
-  const [activeRoommates, setActiveRoommates] = useState([]); // Add state for active roommates
+  const [activeRoommates, setActiveRoommates] = useState([]);
   const [profileComplete, setProfileComplete] = useState(false);
   const [showPreferences, setShowPreferences] = useState(true);
   const [selectedInterests, setSelectedInterests] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [roommateToRemove, setRoommateToRemove] = useState(null);
+  const [expandedInfoIds, setExpandedInfoIds] = useState([]);
   const router = useRouter();
 
   const interestOptions = [
@@ -30,6 +34,15 @@ const RoommateFinder = () => {
     'Reading', 'Cooking', 'Travel', 'Movies', 'Outdoor Activities',
     'Technology', 'Academic', 'Greek Life', 'Religious'
   ];
+
+  // Toggle Additional Info function
+  const toggleAdditionalInfo = (roommateId) => {
+    setExpandedInfoIds(prev => 
+      prev.includes(roommateId) 
+        ? prev.filter(id => id !== roommateId) 
+        : [...prev, roommateId]
+    );
+  };
 
   // Fetch user data and preference data
   useEffect(() => {
@@ -281,27 +294,53 @@ const RoommateFinder = () => {
     }
   };
 
+  // Open confirmation modal for roommate removal
+  const openRemoveConfirmation = (roommate) => {
+    // Check if either user has a room selected
+    const hasRoom = user.selectedRoom || roommate.selectedRoom;
+    
+    if (hasRoom) {
+      setErrorMessage("You cannot remove a roommate while either of you has a room selected. Please cancel your room selection first.");
+      return;
+    }
+    
+    // Set the roommate to remove and open the modal
+    setRoommateToRemove(roommate);
+    setConfirmModal(true);
+  };
+
   // Remove a roommate connection
-  const removeRoommate = async (roommate) => {
-    if (!user) return;
+  const removeRoommate = async () => {
+    if (!user || !roommateToRemove) return;
     
     try {
       // Update my connections
       await updateDoc(doc(db, 'users', user.uid), {
-        roommateConnections: arrayRemove(roommate.uid)
+        roommateConnections: arrayRemove(roommateToRemove.uid)
       });
       
       // Update their connections
-      await updateDoc(doc(db, 'users', roommate.uid), {
+      await updateDoc(doc(db, 'users', roommateToRemove.uid), {
         roommateConnections: arrayRemove(user.uid)
       });
       
       // Update local state
-      setActiveRoommates(activeRoommates.filter(r => r.uid !== roommate.uid));
-      setPotentialRoommates([...potentialRoommates, roommate]);
+      setActiveRoommates(activeRoommates.filter(r => r.uid !== roommateToRemove.uid));
+      setPotentialRoommates([...potentialRoommates, roommateToRemove]);
+      setErrorMessage('');
+      
+      // Close the modal and reset the roommate to remove
+      setConfirmModal(false);
+      setRoommateToRemove(null);
     } catch (error) {
       console.error('Error removing roommate:', error);
     }
+  };
+
+  // Cancel roommate removal
+  const cancelRemove = () => {
+    setConfirmModal(false);
+    setRoommateToRemove(null);
   };
 
   if (loading) {
@@ -327,54 +366,93 @@ const RoommateFinder = () => {
         </Link>
       </div>
       
+      {/* Error message display */}
+      {errorMessage && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md">
+          <p>{errorMessage}</p>
+        </div>
+      )}
+      
       {/* Active Roommates Section */}
       {activeRoommates.length > 0 && (
         <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Active Roommates ({activeRoommates.length})</h2>
           <div className="space-y-4">
-            {activeRoommates.map(roommate => (
-              <div key={roommate.uid} className="border border-green-200 bg-green-50 p-4 rounded-md">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-lg">{roommate.firstName} {roommate.lastName}</h3>
-                    <p className="text-sm text-gray-600">{roommate.email}</p>
-                    
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-sm"><span className="font-semibold">Study Habits:</span> {roommate.roommatePreferences?.studyHabits || 'Not specified'}</p>
-                        <p className="text-sm"><span className="font-semibold">Sleep Schedule:</span> {roommate.roommatePreferences?.sleepSchedule || 'Not specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm"><span className="font-semibold">Cleanliness:</span> {roommate.roommatePreferences?.cleanliness || 'Not specified'}</p>
-                        <p className="text-sm"><span className="font-semibold">Visitors:</span> {roommate.roommatePreferences?.visitors || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    
-                    {roommate.roommatePreferences?.interests && roommate.roommatePreferences.interests.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-semibold">Interests:</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {roommate.roommatePreferences.interests.map(interest => (
-                            <span key={interest} className="bg-green-100 px-2 py-0.5 rounded text-xs">
-                              {interest}
-                            </span>
-                          ))}
+            {activeRoommates.map(roommate => {
+              // Check if either user has a room selected
+              const hasRoom = user?.selectedRoom || roommate.selectedRoom;
+              
+              return (
+                <div key={roommate.uid} className="border border-green-200 bg-green-50 p-4 rounded-md">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-lg">{roommate.firstName} {roommate.lastName}</h3>
+                      <p className="text-sm text-gray-600">{roommate.email}</p>
+                      
+                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-sm"><span className="font-semibold">Study Habits:</span> {roommate.roommatePreferences?.studyHabits || 'Not specified'}</p>
+                          <p className="text-sm"><span className="font-semibold">Sleep Schedule:</span> {roommate.roommatePreferences?.sleepSchedule || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm"><span className="font-semibold">Cleanliness:</span> {roommate.roommatePreferences?.cleanliness || 'Not specified'}</p>
+                          <p className="text-sm"><span className="font-semibold">Visitors:</span> {roommate.roommatePreferences?.visitors || 'Not specified'}</p>
                         </div>
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <button
-                      onClick={() => removeRoommate(roommate)}
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-sm"
-                    >
-                      Remove
-                    </button>
+                      
+                      {/* Display room information if selected */}
+                      {roommate.selectedRoom && (
+                        <div className="mt-2 bg-blue-50 p-2 rounded">
+                          <p className="text-sm">
+                            <span className="font-semibold">Room:</span> {roommate.selectedRoom.roomNumber} in {roommate.selectedRoom.dormName}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {roommate.roommatePreferences?.interests && roommate.roommatePreferences.interests.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-semibold">Interests:</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {roommate.roommatePreferences.interests.map(interest => (
+                              <span key={interest} className="bg-green-100 px-2 py-0.5 rounded text-xs">
+                                {interest}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      {hasRoom ? (
+                        <button
+                          disabled
+                          className="bg-gray-300 text-gray-500 py-1 px-3 rounded text-sm cursor-not-allowed"
+                          title="Cannot remove roommate while a room is selected"
+                        >
+                          Remove
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => openRemoveConfirmation(roommate)}
+                          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded text-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          
+          {/* Add a notice explaining the roommate/room policy */}
+          {activeRoommates.some(r => user?.selectedRoom || r.selectedRoom) && (
+            <div className="mt-4 bg-yellow-50 p-3 rounded-md text-sm border border-yellow-200">
+              <p><strong>Note:</strong> You cannot remove a roommate while either of you has a room selected. 
+              To remove a roommate, you must first cancel your room selection in the dashboard.</p>
+            </div>
+          )}
         </div>
       )}
       
@@ -617,7 +695,21 @@ const RoommateFinder = () => {
                       {roommate.roommatePreferences?.additionalInfo && (
                         <div className="mt-2">
                           <p className="text-sm font-semibold">Additional Info:</p>
-                          <p className="text-sm">{roommate.roommatePreferences.additionalInfo}</p>
+                          <div className="relative">
+                            <p className={`text-sm break-words ${
+                              !expandedInfoIds.includes(roommate.uid) ? "line-clamp-2 max-h-12" : ""
+                            }`}>
+                              {roommate.roommatePreferences.additionalInfo}
+                            </p>
+                            {roommate.roommatePreferences.additionalInfo.length > 100 && (
+                              <button 
+                                onClick={() => toggleAdditionalInfo(roommate.uid)}
+                                className="text-xs text-yellow-600 hover:text-yellow-700 font-medium mt-1"
+                              >
+                                {expandedInfoIds.includes(roommate.uid) ? "See less" : "See more"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -626,6 +718,32 @@ const RoommateFinder = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Confirmation Modal */}
+      {confirmModal && roommateToRemove && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Confirm Roommate Removal</h3>
+            <p className="mb-4">Are you sure you want to remove <span className="font-semibold">{roommateToRemove.firstName} {roommateToRemove.lastName}</span> as your roommate?</p>
+            <p className="mb-6 text-gray-600 text-sm">This will remove the roommate connection for both of you. You can always send a new request later.</p>
+            
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={cancelRemove}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={removeRoommate}
+                className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-semibold"
+              >
+                Remove Roommate
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
