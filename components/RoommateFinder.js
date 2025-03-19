@@ -461,47 +461,6 @@ const RoommateFinder = () => {
         }
     };
 
-    // The removeRoommate function needs to be updated to handle complex network changes
-    const removeRoommate = async () => {
-        if (!user || !roommateToRemove) return;
-
-        try {
-            console.log("Starting roommate removal...");
-
-            // Stage 1: Remove the connection between the current user and the roommate
-            // Update my connections
-            await updateDoc(doc(db, 'users', user.uid), {
-                roommateConnections: arrayRemove(roommateToRemove.uid)
-            });
-
-            // Update roommate's connections
-            await updateDoc(doc(db, 'users', roommateToRemove.uid), {
-                roommateConnections: arrayRemove(user.uid)
-            });
-
-            console.log("Direct connection removed");
-
-            // Stage 2: Update local state
-            setActiveRoommates(activeRoommates.filter(r => r.uid !== roommateToRemove.uid));
-            setPotentialRoommates([...potentialRoommates, roommateToRemove]);
-            setFilteredRoommates([...filteredRoommates, roommateToRemove]);
-            setErrorMessage('');
-
-            // Close the modal and reset the roommate to remove
-            setConfirmModal(false);
-            setRoommateToRemove(null);
-
-            // Force reload to ensure fresh data is displayed
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-
-        } catch (error) {
-            console.error('Error removing roommate:', error);
-            setErrorMessage('Error removing roommate: ' + error.message);
-        }
-    };
-
     // Decline roommate request
     const declineRequest = async (requestor) => {
         if (!user) return;
@@ -816,30 +775,6 @@ const RoommateFinder = () => {
                                             <div>
                                                 <h3 className="font-bold text-lg text-gray-900">{roommate.firstName} {roommate.lastName}</h3>
                                                 <p className="text-sm text-gray-600">{roommate.email}</p>
-                                            </div>
-                                            <div>
-                                                {hasRoom ? (
-                                                    <button
-                                                        disabled
-                                                        className="bg-gray-300 text-gray-500 py-1 px-4 rounded text-sm cursor-not-allowed flex items-center"
-                                                        title="Cannot remove roommate while a room is selected"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                        Remove
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => openRemoveConfirmation(roommate)}
-                                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-4 rounded text-sm transition duration-200 flex items-center"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mb-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                        Remove
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
 
@@ -1397,32 +1332,6 @@ const RoommateFinder = () => {
                     </div>
                 )}
             </div>
-
-            {/* Confirmation Modal */}
-            {confirmModal && roommateToRemove && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                        <h3 className="text-xl font-bold mb-4 text-gray-900">Confirm Roommate Removal</h3>
-                        <p className="mb-4 text-gray-700">Are you sure you want to remove <span className="font-semibold">{roommateToRemove.firstName} {roommateToRemove.lastName}</span> as your roommate?</p>
-                        <p className="mb-6 text-gray-600 text-sm">This will remove the roommate connection for both of you. You can always send a new request later.</p>
-
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                onClick={cancelRemove}
-                                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-gray-700 font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={removeRoommate}
-                                className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md font-semibold transition duration-200"
-                            >
-                                Remove Roommate
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
