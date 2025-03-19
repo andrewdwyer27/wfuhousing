@@ -24,6 +24,7 @@ const TimeSlotAdmin = () => {
     });
     const [isAdmin, setIsAdmin] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const router = useRouter();
 
     // Check if current user is admin and load users
@@ -44,6 +45,7 @@ const TimeSlotAdmin = () => {
                     }
                 } catch (error) {
                     console.error('Error checking admin status:', error);
+                    setErrorMessage('Error checking admin status: ' + error.message);
                 } finally {
                     setLoading(false);
                 }
@@ -76,6 +78,7 @@ const TimeSlotAdmin = () => {
             setFilteredUsers(userData);
         } catch (error) {
             console.error('Error fetching users:', error);
+            setErrorMessage('Error fetching users: ' + error.message);
         }
     };
 
@@ -172,14 +175,14 @@ const TimeSlotAdmin = () => {
             showSuccessMessage("Time slot updated successfully");
         } catch (error) {
             console.error('Error updating time slot:', error);
-            alert("Error updating time slot: " + error.message);
+            setErrorMessage("Error updating time slot: " + error.message);
         }
     };
 
     // Apply bulk time slot to selected users
     const applyBulkTimeSlot = async () => {
         if (selectedUsers.length === 0 || !bulkTimeSlot.startTime || !bulkTimeSlot.endTime) {
-            alert("Please select users and specify a time slot");
+            setErrorMessage("Please select users and specify a time slot");
             return;
         }
 
@@ -210,15 +213,14 @@ const TimeSlotAdmin = () => {
             showSuccessMessage(`Time slot updated for ${selectedUsers.length} users`);
         } catch (error) {
             console.error('Error applying bulk time slot:', error);
-            alert("Error updating time slots: " + error.message);
+            setErrorMessage("Error updating time slots: " + error.message);
         }
     };
-
 
     // Clear time slots for selected users
     const clearTimeSlots = async () => {
         if (selectedUsers.length === 0) {
-            alert("Please select users to clear time slots");
+            setErrorMessage("Please select users to clear time slots");
             return;
         }
 
@@ -253,12 +255,13 @@ const TimeSlotAdmin = () => {
             showSuccessMessage(`Time slots cleared for ${selectedUsers.length} users`);
         } catch (error) {
             console.error('Error clearing time slots:', error);
-            alert("Error clearing time slots: " + error.message);
+            setErrorMessage("Error clearing time slots: " + error.message);
         }
     };
 
     // Show a success message that disappears after 3 seconds
     const showSuccessMessage = (message) => {
+        setErrorMessage(''); // Clear any error messages
         setSuccessMessage(message);
         setTimeout(() => {
             setSuccessMessage('');
@@ -281,60 +284,88 @@ const TimeSlotAdmin = () => {
 
     if (loading) {
         return (
-            <div className="max-w-7xl mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-4">Time Slot Administration</h1>
-                <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
-                    <p>Loading...</p>
-                </div>
+            <div className="flex justify-center items-center py-8">
+                <div className="w-8 h-8 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="ml-3 text-gray-700">Loading user data...</p>
             </div>
         );
     }
 
     if (!isAdmin) {
-        return (
-            <div className="max-w-7xl mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-                <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
-                    <p>You do not have permission to access this page.</p>
-                </div>
-            </div>
-        );
+        return null; // Will be redirected by useEffect
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-4">
-            <h1 className="text-3xl font-bold mb-4">Time Slot Administration</h1>
+        <div className="space-y-6">
+            <div className="mb-6 flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-900">Time Slot Administration</h3>
+            </div>
 
-            {/* Success message */}
+            {/* Notification Messages */}
             {successMessage && (
-                <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6">
-                    <p>{successMessage}</p>
+                <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm leading-5 font-medium">{successMessage}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm leading-5 font-medium">{errorMessage}</p>
+                            <button 
+                                onClick={() => setErrorMessage('')}
+                                className="text-red-700 hover:text-red-600 font-medium text-xs underline ml-2"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
             {/* Bulk Actions Panel */}
-            <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold mb-4">Bulk Time Slot Assignment</h2>
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                <h2 className="text-lg font-bold mb-4 text-gray-900 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Bulk Time Slot Assignment
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label className="block mb-1">Start Time</label>
+                        <label className="block text-gray-700 font-medium mb-2">Start Time</label>
                         <input
                             type="datetime-local"
                             name="startTime"
                             value={bulkTimeSlot.startTime}
                             onChange={handleBulkTimeSlotChange}
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         />
                     </div>
                     <div>
-                        <label className="block mb-1">End Time</label>
+                        <label className="block text-gray-700 font-medium mb-2">End Time</label>
                         <input
                             type="datetime-local"
                             name="endTime"
                             value={bulkTimeSlot.endTime}
                             onChange={handleBulkTimeSlotChange}
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         />
                     </div>
                 </div>
@@ -343,18 +374,22 @@ const TimeSlotAdmin = () => {
                     <button
                         onClick={applyBulkTimeSlot}
                         disabled={selectedUsers.length === 0 || !bulkTimeSlot.startTime || !bulkTimeSlot.endTime}
-                        className={`py-2 px-4 rounded font-semibold ${selectedUsers.length === 0 || !bulkTimeSlot.startTime || !bulkTimeSlot.endTime
+                        className={`py-2 px-4 rounded font-medium ${
+                            selectedUsers.length === 0 || !bulkTimeSlot.startTime || !bulkTimeSlot.endTime
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-yellow-600 hover:bg-yellow-700 text-black'
+                                : 'bg-yellow-600 hover:bg-yellow-700 text-white'
                             }`}
                     >
-                        Assign Time Slot to {selectedUsers.length} Selected Users
+                        {selectedUsers.length > 0 
+                            ? `Assign Time Slot to ${selectedUsers.length} Selected Users` 
+                            : 'Select Users to Assign Time Slot'}
                     </button>
 
                     <button
                         onClick={clearTimeSlots}
                         disabled={selectedUsers.length === 0}
-                        className={`py-2 px-4 rounded font-semibold ${selectedUsers.length === 0
+                        className={`py-2 px-4 rounded font-medium ${
+                            selectedUsers.length === 0
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-red-600 hover:bg-red-700 text-white'
                             }`}
@@ -365,28 +400,39 @@ const TimeSlotAdmin = () => {
             </div>
 
             {/* Filters and Search */}
-            <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                <h4 className="text-lg font-semibold mb-4 text-gray-900 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    Filter Users
+                </h4>
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                        <label htmlFor="searchTerm" className="block mb-1">Search</label>
+                        <label htmlFor="searchTerm" className="block text-gray-700 font-medium mb-2">
+                            Search
+                        </label>
                         <input
                             id="searchTerm"
                             type="text"
                             value={searchTerm}
                             onChange={handleSearchChange}
                             placeholder="Name, Email, ID..."
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="classYear" className="block mb-1">Class Year</label>
+                        <label htmlFor="classYear" className="block text-gray-700 font-medium mb-2">
+                            Class Year
+                        </label>
                         <select
                             id="classYear"
                             name="classYear"
                             value={filterOptions.classYear}
                             onChange={handleFilterChange}
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         >
                             <option value="">All Years</option>
                             <option value="2025 (Senior)">2025 (Senior)</option>
@@ -397,13 +443,15 @@ const TimeSlotAdmin = () => {
                     </div>
 
                     <div>
-                        <label htmlFor="hasTimeSlot" className="block mb-1">Has Time Slot</label>
+                        <label htmlFor="hasTimeSlot" className="block text-gray-700 font-medium mb-2">
+                            Has Time Slot
+                        </label>
                         <select
                             id="hasTimeSlot"
                             name="hasTimeSlot"
                             value={filterOptions.hasTimeSlot}
                             onChange={handleFilterChange}
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         >
                             <option value="all">All</option>
                             <option value="yes">Yes</option>
@@ -412,13 +460,15 @@ const TimeSlotAdmin = () => {
                     </div>
 
                     <div>
-                        <label htmlFor="hasRoom" className="block mb-1">Has Room</label>
+                        <label htmlFor="hasRoom" className="block text-gray-700 font-medium mb-2">
+                            Has Room
+                        </label>
                         <select
                             id="hasRoom"
                             name="hasRoom"
                             value={filterOptions.hasRoom}
                             onChange={handleFilterChange}
-                            className="border border-gray-300 p-2 w-full"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         >
                             <option value="all">All</option>
                             <option value="yes">Yes</option>
@@ -428,7 +478,7 @@ const TimeSlotAdmin = () => {
                 </div>
 
                 <div className="flex justify-between items-center">
-                    <p>Showing {filteredUsers.length} of {users.length} users</p>
+                    <p className="text-sm text-gray-600">Showing {filteredUsers.length} of {users.length} users</p>
 
                     <button
                         onClick={() => {
@@ -439,7 +489,7 @@ const TimeSlotAdmin = () => {
                                 hasRoom: 'all'
                             });
                         }}
-                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                        className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
                     >
                         Clear Filters
                     </button>
@@ -447,19 +497,30 @@ const TimeSlotAdmin = () => {
             </div>
 
             {/* User Table */}
-            <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h4 className="text-lg font-semibold text-gray-900">Student List</h4>
+                    {selectedUsers.length > 0 && (
+                        <span className="text-sm text-gray-600 bg-yellow-100 px-2 py-1 rounded">
+                            {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
+                        </span>
+                    )}
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                                        onChange={toggleSelectAll}
-                                        className="mr-2"
-                                    />
-                                    Name
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded mr-2"
+                                        />
+                                        <span>Name</span>
+                                    </div>
                                 </th>
                                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Email
@@ -480,36 +541,43 @@ const TimeSlotAdmin = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredUsers.map(user => (
-                                <tr key={user.uid} className={selectedUsers.includes(user.uid) ? 'bg-yellow-50' : ''}>
+                                <tr key={user.uid} 
+                                    className={selectedUsers.includes(user.uid) 
+                                        ? 'bg-yellow-50' 
+                                        : 'hover:bg-gray-50'
+                                    }
+                                >
                                     <td className="px-4 py-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedUsers.includes(user.uid)}
-                                            onChange={() => toggleUserSelection(user.uid)}
-                                            className="mr-2"
-                                        />
-                                        {user.firstName} {user.lastName}
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedUsers.includes(user.uid)}
+                                                onChange={() => toggleUserSelection(user.uid)}
+                                                className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded mr-2"
+                                            />
+                                            <span className="font-medium text-gray-900">{user.firstName} {user.lastName}</span>
+                                        </div>
                                     </td>
-                                    <td className="px-4 py-3 text-sm">
+                                    <td className="px-4 py-3 text-sm text-gray-700">
                                         {user.email}
                                     </td>
-                                    <td className="px-4 py-3 text-sm">
+                                    <td className="px-4 py-3 text-sm text-gray-700">
                                         {user.classYear || 'N/A'}
                                     </td>
                                     <td className="px-4 py-3 text-sm">
                                         {user.timeSlot ? (
-                                            <div>
+                                            <div className="text-gray-700">
                                                 <div>{formatDateTime(user.timeSlot.startTime)}</div>
-                                                <div>to</div>
+                                                <div className="text-gray-500 text-xs">to</div>
                                                 <div>{formatDateTime(user.timeSlot.endTime)}</div>
                                             </div>
                                         ) : (
-                                            <span className="text-red-500">Not set</span>
+                                            <span className="text-red-600 font-medium">Not set</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-sm">
                                         {user.selectedRoom ? (
-                                            <span className="text-green-600">
+                                            <span className="text-green-600 font-medium">
                                                 {user.selectedRoom.roomNumber} in {user.selectedRoom.dormName}
                                             </span>
                                         ) : (
@@ -517,16 +585,29 @@ const TimeSlotAdmin = () => {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-sm">
-                                        {user.timeSlot && (
+                                        {user.timeSlot ? (
                                             <button
                                                 onClick={() => {
                                                     if (confirm('Are you sure you want to clear this time slot?')) {
                                                         setUserTimeSlot(user.uid, null);
                                                     }
                                                 }}
-                                                className="text-red-600 hover:text-red-800"
+                                                className="text-red-600 hover:text-red-800 font-medium"
                                             >
-                                                Clear
+                                                Clear Slot
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => {
+                                                    toggleUserSelection(user.uid);
+                                                    if (!bulkTimeSlot.startTime || !bulkTimeSlot.endTime) {
+                                                        // Set focus to start time input
+                                                        document.querySelector('input[name="startTime"]').focus();
+                                                    }
+                                                }}
+                                                className="text-yellow-600 hover:text-yellow-800 font-medium"
+                                            >
+                                                Assign Slot
                                             </button>
                                         )}
                                     </td>
