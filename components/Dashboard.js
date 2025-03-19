@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import AnnouncementsList from '../components/AnnouncementsList';
 
 const Dashboard = () => {
     const [user, setUser] = useState(null);
@@ -87,6 +88,9 @@ const Dashboard = () => {
             console.error("Error signing out:", error);
         }
     };
+    
+    // Check if user has admin access
+    const isAdmin = user?.role === 'admin';
 
     if (loading) {
         return (
@@ -107,12 +111,22 @@ const Dashboard = () => {
             <div className="bg-black text-white py-4 shadow-md">
                 <div className="max-w-4xl mx-auto px-4 flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-yellow-500">WakeRooms</h1>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-1 px-4 rounded transition duration-200"
-                    >
-                        Log out
-                    </button>
+                    <div className="flex items-center space-x-4">
+                        {isAdmin && (
+                            <Link
+                                href="/admin"
+                                className="text-white hover:text-yellow-400 transition duration-200"
+                            >
+                                Admin Dashboard
+                            </Link>
+                        )}
+                        <button
+                            onClick={handleLogout}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium py-1 px-4 rounded transition duration-200"
+                        >
+                            Log out
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -373,18 +387,9 @@ const Dashboard = () => {
                         </svg>
                         Announcements
                     </h2>
-                    <div className="space-y-4">
-                        <div className="border-l-4 border-yellow-500 pl-4 py-1">
-                            <p className="text-sm text-gray-500">March 5, 2025</p>
-                            <h3 className="font-medium text-gray-900">New Housing Options Available</h3>
-                            <p className="text-gray-700 text-sm mt-1">Additional rooms in South Residence Hall have been made available for the upcoming selection period.</p>
-                        </div>
-                        <div className="border-l-4 border-yellow-500 pl-4 py-1">
-                            <p className="text-sm text-gray-500">February 28, 2025</p>
-                            <h3 className="font-medium text-gray-900">Housing Information Sessions</h3>
-                            <p className="text-gray-700 text-sm mt-1">Virtual information sessions will be held on March 10th and 12th. Check your email for Zoom links.</p>
-                        </div>
-                    </div>
+                    
+                    {/* Dynamic Announcements */}
+                    <AnnouncementsList limit={3} />
                 </div>
             </div>
 
