@@ -225,7 +225,7 @@ const Dashboard = () => {
                                         </svg>
                                         <div>
                                             <p className="text-green-800 font-medium mb-2">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
-                                            <p className="text-gray-700">
+                                            <p className="text-green-700 text-sm">
                                                 <span className="font-semibold">
                                                     {new Date(timeSlotInfo.startTime).toLocaleDateString('en-US', {
                                                         month: 'long',
