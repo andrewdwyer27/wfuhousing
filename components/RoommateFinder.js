@@ -333,195 +333,155 @@ const RoommateFinder = () => {
     };
 
     // Accept roommate request
+    // This function uses a fully synchronous approach to handle roommate connections
     const acceptRequest = async (requestor) => {
         if (!user) return;
-        console.log("========== ACCEPT REQUEST STARTED ==========");
-        console.log("Current user:", user.uid, user.firstName, user.lastName);
-        console.log("Requestor:", requestor.uid, requestor.firstName, requestor.lastName);
-    
+
         try {
-            // Get both users' current roommate connections
+            console.log("Starting roommate acceptance with full transitivity...");
+
+            // Step 1: Get the data for all users involved
+            // Get the current user's data
             const myDoc = await getDoc(doc(db, 'users', user.uid));
-            const requestorDoc = await getDoc(doc(db, 'users', requestor.uid));
-    
-            if (!myDoc.exists() || !requestorDoc.exists()) {
-                console.error('User document not found');
+            if (!myDoc.exists()) {
+                console.error('Current user document not found');
                 return;
             }
-    
             const myData = myDoc.data();
+
+            // Get the requestor's data
+            const requestorDoc = await getDoc(doc(db, 'users', requestor.uid));
+            if (!requestorDoc.exists()) {
+                console.error('Requestor document not found');
+                return;
+            }
             const requestorData = requestorDoc.data();
-    
-            // Build the complete set of all roommate connections
-            let myConnections = myData.roommateConnections || [];
-            let requestorConnections = requestorData.roommateConnections || [];
-    
-            console.log("My current connections:", myConnections);
-            console.log("Requestor's current connections:", requestorConnections);
-    
-            // The direct solution: add each other to roommate connections
-            // Simply add the requestor to my connections
-            await updateDoc(doc(db, 'users', user.uid), {
-                roommateConnections: arrayUnion(requestor.uid),
-                incomingRoommateRequests: arrayRemove(requestor.uid)
-            });
-            console.log(`Added ${requestor.uid} to ${user.uid}'s connections`);
-    
-            // Add me to the requestor's connections
-            await updateDoc(doc(db, 'users', requestor.uid), {
-                roommateConnections: arrayUnion(user.uid),
-                outgoingRoommateRequests: arrayRemove(user.uid)
-            });
-            console.log(`Added ${user.uid} to ${requestor.uid}'s connections`);
-    
-            // Create the combined connections set for transitivity checks
-            // Include both the current direct connections and any existing connections
-            const allConnections = new Set([
+
+            // Get my existing roommate connections
+            const myConnections = myData.roommateConnections || [];
+
+            // Get requestor's existing roommate connections
+            const requestorConnections = requestorData.roommateConnections || [];
+
+            console.log("My existing connections:", myConnections);
+            console.log("Requestor's existing connections:", requestorConnections);
+
+            // Step 2: Create a complete network of all roommates who should be connected
+            // Start with a list of all user IDs in the network (including myself and the requestor)
+            let allUserIds = new Set([
+                user.uid,
+                requestor.uid,
                 ...myConnections,
-                ...requestorConnections,
-                requestor.uid // Add the requestor to my connections
+                ...requestorConnections
             ]);
-            allConnections.delete(user.uid); // Remove myself
-    
-            console.log("All connections to check:", Array.from(allConnections));
-    
-            // Handle transitive connections (if A connects to B and B to C, connect A to C)
-            if (allConnections.size > 1) {
-                console.log("More than one connection found, handling transitivity");
-                
-                // Get all the roommates' data to check their existing connections
-                const otherRoommateDocs = await Promise.all(
-                    Array.from(allConnections).map(uid => getDoc(doc(db, 'users', uid)))
-                );
-                
-                const batch = writeBatch(db);
-                let updates = 0;
-                
-                // For each roommate
-                for (let i = 0; i < otherRoommateDocs.length; i++) {
-                    const roommateDoc = otherRoommateDocs[i];
-                    if (!roommateDoc.exists()) continue;
-                    
-                    const roommateId = roommateDoc.id;
-                    const roommateData = roommateDoc.data();
-                    const roommateConnections = roommateData.roommateConnections || [];
-                    
-                    console.log(`Checking roommate ${roommateId} connections:`, roommateConnections);
-                    
-                    // Check which connections this roommate is missing
-                    const missingConnections = Array.from(allConnections).filter(
-                        uid => uid !== roommateId && !roommateConnections.includes(uid)
-                    );
-                    
-                    if (missingConnections.length > 0) {
-                        console.log(`Roommate ${roommateId} is missing connections:`, missingConnections);
-                        
-                        // Add the missing connections to this roommate
-                        batch.update(doc(db, 'users', roommateId), {
-                            roommateConnections: arrayUnion(...missingConnections)
-                        });
-                        updates++;
-                        
-                        // Also add this roommate to all the missing connections
-                        for (const missingId of missingConnections) {
-                            batch.update(doc(db, 'users', missingId), {
-                                roommateConnections: arrayUnion(roommateId)
-                            });
-                            updates++;
-                        }
-                    }
-                }
-                
-                // Only commit if there are updates to make
-                if (updates > 0) {
-                    console.log(`Committing batch with ${updates} updates`);
-                    await batch.commit();
-                    console.log("Transitive connections updated successfully");
+
+            console.log("All users in the network:", Array.from(allUserIds));
+
+            // Step 3: Fetch all user documents for the entire network
+            const userDocs = [];
+            for (const uid of allUserIds) {
+                const userDoc = await getDoc(doc(db, 'users', uid));
+                if (userDoc.exists()) {
+                    userDocs.push({
+                        uid: uid,
+                        data: userDoc.data()
+                    });
                 } else {
-                    console.log("No transitive connections to update");
+                    console.warn(`User document ${uid} not found, skipping`);
                 }
             }
-    
-            // Update local state
+
+            // Step 4: Create a batch to update all users in the network
+            const batch = writeBatch(db);
+
+            // For each user in the network...
+            for (const userDoc of userDocs) {
+                const userId = userDoc.uid;
+                const userData = userDoc.data;
+
+                // Get their current connections
+                const userConnections = userData.roommateConnections || [];
+
+                // They should be connected to everyone except themselves
+                const newConnections = Array.from(allUserIds).filter(id => id !== userId);
+
+                console.log(`Updating user ${userId} connections:`, newConnections);
+
+                // Handle special cases for the current user and the requestor
+                if (userId === user.uid) {
+                    // Current user: also remove the incoming request
+                    batch.update(doc(db, 'users', userId), {
+                        roommateConnections: newConnections,
+                        incomingRoommateRequests: arrayRemove(requestor.uid)
+                    });
+                } else if (userId === requestor.uid) {
+                    // Requestor: also remove the outgoing request
+                    batch.update(doc(db, 'users', userId), {
+                        roommateConnections: newConnections,
+                        outgoingRoommateRequests: arrayRemove(user.uid)
+                    });
+                } else {
+                    // All other users: just update connections
+                    batch.update(doc(db, 'users', userId), {
+                        roommateConnections: newConnections
+                    });
+                }
+            }
+
+            // Step 5: Commit all updates in a single batch
+            console.log("Committing batch updates for all users in the network...");
+            await batch.commit();
+            console.log("Batch committed successfully");
+
+            // Step 6: Update local state
+            console.log("Updating local state...");
+
+            // Update the requests list (remove the accepted request)
             setRequests(requests.filter(r => r.uid !== requestor.uid));
-            
-            // Update active roommates (include at least the new requestor)
-            // We need to re-fetch all roommate data to get the latest connections
-            const allRoommateIds = [...myConnections, requestor.uid];
-            console.log("Fetching data for roommates:", allRoommateIds);
-            
-            const roommateData = await Promise.all(
-                allRoommateIds.map(async (uid) => {
-                    const roommateDoc = await getDoc(doc(db, 'users', uid));
-                    if (roommateDoc.exists()) {
-                        return {
-                            uid: uid,
-                            ...roommateDoc.data()
-                        };
-                    }
-                    return null;
-                })
-            );
-    
-            const filteredRoommateData = roommateData.filter(roommate => roommate !== null);
-            console.log("Updating active roommates to:", filteredRoommateData.map(r => r.uid));
-            
-            setActiveRoommates(filteredRoommateData);
-            console.log("========== ACCEPT REQUEST COMPLETED ==========");
-    
-            // Force a refresh to ensure we're showing the latest data
+
+            // Update active roommates with all connected users
+            const roommateData = userDocs
+                .filter(doc => doc.uid !== user.uid)
+                .map(doc => ({
+                    uid: doc.uid,
+                    ...doc.data
+                }));
+
+            setActiveRoommates(roommateData);
+            console.log("Local state updated with all roommates");
+
+            // Force reload to ensure fresh data is displayed
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
-    
+
         } catch (error) {
             console.error('Error accepting request:', error);
-            setErrorMessage('Error accepting roommate request. Please try again.');
+            setErrorMessage('Error accepting roommate request: ' + error.message);
         }
     };
 
-    // Remove a roommate connection
+    // The removeRoommate function needs to be updated to handle complex network changes
     const removeRoommate = async () => {
         if (!user || !roommateToRemove) return;
 
         try {
-            // Get both users' current roommate connections
-            const myDoc = await getDoc(doc(db, 'users', user.uid));
-            const roommateDoc = await getDoc(doc(db, 'users', roommateToRemove.uid));
+            console.log("Starting roommate removal...");
 
-            if (!myDoc.exists() || !roommateDoc.exists()) {
-                console.error('User document not found');
-                return;
-            }
-
-            const myData = myDoc.data();
-            const roommateData = roommateDoc.data();
-
-            // Get my current connections and remove the roommate
-            let myConnections = myData.roommateConnections || [];
-            myConnections = myConnections.filter(id => id !== roommateToRemove.uid);
-
-            // Get roommate's connections and remove me
-            let roommateConnections = roommateData.roommateConnections || [];
-            roommateConnections = roommateConnections.filter(id => id !== user.uid);
-
-            // Batch update
-            const batch = writeBatch(db);
-
+            // Stage 1: Remove the connection between the current user and the roommate
             // Update my connections
-            batch.update(doc(db, 'users', user.uid), {
-                roommateConnections: myConnections
+            await updateDoc(doc(db, 'users', user.uid), {
+                roommateConnections: arrayRemove(roommateToRemove.uid)
             });
 
             // Update roommate's connections
-            batch.update(doc(db, 'users', roommateToRemove.uid), {
-                roommateConnections: roommateConnections
+            await updateDoc(doc(db, 'users', roommateToRemove.uid), {
+                roommateConnections: arrayRemove(user.uid)
             });
 
-            // Commit the batch
-            await batch.commit();
+            console.log("Direct connection removed");
 
-            // Update local state
+            // Stage 2: Update local state
             setActiveRoommates(activeRoommates.filter(r => r.uid !== roommateToRemove.uid));
             setPotentialRoommates([...potentialRoommates, roommateToRemove]);
             setFilteredRoommates([...filteredRoommates, roommateToRemove]);
@@ -530,9 +490,15 @@ const RoommateFinder = () => {
             // Close the modal and reset the roommate to remove
             setConfirmModal(false);
             setRoommateToRemove(null);
+
+            // Force reload to ensure fresh data is displayed
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+
         } catch (error) {
             console.error('Error removing roommate:', error);
-            setErrorMessage('Error removing roommate. Please try again.');
+            setErrorMessage('Error removing roommate: ' + error.message);
         }
     };
 
