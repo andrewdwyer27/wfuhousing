@@ -13,6 +13,20 @@ const Dashboard = () => {
     const [timeSlotInfo, setTimeSlotInfo] = useState(null);
     const router = useRouter();
 
+    // Helper function to check if preferences are completely filled out
+    const hasCompletePreferences = (user) => {
+        // Check if preferences object exists
+        if (!user?.preferences) return false;
+        
+        // Check if required preference fields have values
+        const { floorPreference, roomType } = user.preferences;
+        
+        // Check if the specific preference fields have actual values
+        return floorPreference && roomType && 
+               typeof floorPreference === 'string' && floorPreference.trim() !== '' &&
+               typeof roomType === 'string' && roomType.trim() !== '';
+    };
+
     // Check if the current time is within the user's time slot
     const checkTimeSlot = (timeSlot) => {
         if (!timeSlot) return false;
@@ -343,7 +357,7 @@ const Dashboard = () => {
                             </div>
                         )}
                         
-                        {/* Roommate Preferences Status */}
+                        {/* Roommate Preferences Status - FIXED */}
                         <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -351,7 +365,7 @@ const Dashboard = () => {
                             Roommate Preferences
                         </h3>
                         
-                        {user?.roommatePreferences || user?.preferences ? (
+                        {hasCompletePreferences(user) ? (
                             <div className="bg-green-50 border border-green-200 rounded-md p-4">
                                 <div className="flex items-start">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
