@@ -15,16 +15,18 @@ const Dashboard = () => {
 
     // Helper function to check if preferences are completely filled out
     const hasCompletePreferences = (user) => {
-        // Check if preferences object exists
-        if (!user?.preferences) return false;
+        // Check if roommatePreferences object exists
+        if (!user?.roommatePreferences) return false;
 
-        // Check if required preference fields have values
-        const { floorPreference, roomType } = user.preferences;
+        // Check if required roommate preference fields have values
+        const { studyHabits, sleepSchedule, cleanliness, visitors } = user.roommatePreferences;
 
         // Check if the specific preference fields have actual values
-        return floorPreference && roomType &&
-            typeof floorPreference === 'string' && floorPreference.trim() !== '' &&
-            typeof roomType === 'string' && roomType.trim() !== '';
+        return studyHabits && sleepSchedule && cleanliness && visitors &&
+            typeof studyHabits === 'string' && studyHabits.trim() !== '' &&
+            typeof sleepSchedule === 'string' && sleepSchedule.trim() !== '' &&
+            typeof cleanliness === 'string' && cleanliness.trim() !== '' &&
+            typeof visitors === 'string' && visitors.trim() !== '';
     };
 
     // Check if the current time is within the user's time slot
