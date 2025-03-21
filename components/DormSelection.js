@@ -164,42 +164,6 @@ const DormSelection = () => {
                         })}
                     </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-
-                    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-                        <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Quick Help
-                        </h2>
-                        <ul className="space-y-3">
-                            <li className="flex items-start">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span className="text-gray-700 text-sm">Select a residence hall to view individual rooms and floor plans.</span>
-                            </li>
-                            <li className="flex items-start">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span className="text-gray-700 text-sm">Room selection is final once confirmed, so choose carefully.</span>
-                            </li>
-                            <li className="flex items-start">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span className="text-gray-700 text-sm">Need to find a roommate first? Return to the dashboard and use the roommate finder.</span>
-                            </li>
-                        </ul>
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                            <p className="text-sm text-gray-600">Have questions? <a href="#" className="text-yellow-600 hover:text-yellow-800 font-medium">Contact Housing Services</a></p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Footer */}
