@@ -65,22 +65,37 @@ const RoomSelection = () => {
         return `${diffHrs} hr${diffHrs !== 1 ? 's' : ''} ${diffMins} min${diffMins !== 1 ? 's' : ''} remaining`;
     };
 
-    // Check authentication and fetch dorm and rooms data
-    // Check authentication and fetch dorm and rooms data
+    // Log filtered rooms info before render
+    console.log("Before rendering - dorm:", dorm);
+    console.log("Before rendering - rooms array length:", rooms.length);
+    console.log("Before rendering - rooms array:", rooms);
+    console.log("Before rendering - selected floor:", selectedFloor);
+    console.log("Before rendering - filters:", filters);
+    console.log("Before rendering - group selection mode:", groupSelection);
+    console.log("Before rendering - active roommates:", activeRoommates);
+
+    // Add these logs to the useEffect hook that loads the rooms data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+            console.log("Auth state changed, user:", authUser ? authUser.uid : "No user");
+
             if (authUser) {
                 try {
                     // Get user data
+                    console.log("Fetching user document for:", authUser.uid);
                     const userDoc = await getDoc(doc(db, 'users', authUser.uid));
+                    console.log("User document exists:", userDoc.exists());
+
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
+                        console.log("User data:", userData);
                         setUser({
                             uid: authUser.uid,
                             ...userData
                         });
 
                         // Check if user already has a room selected
+                        console.log("User selected room:", userData.selectedRoom);
                         if (userData.selectedRoom) {
                             setHasExistingRoom(true);
                         }
@@ -89,18 +104,23 @@ const RoomSelection = () => {
                         let currentUserHasActiveTimeSlot = false;
 
                         // Check if user has an active time slot
+                        console.log("User time slot:", userData.timeSlot);
                         if (userData.timeSlot) {
                             currentUserHasActiveTimeSlot = checkTimeSlot(userData.timeSlot);
+                            console.log("Time slot active:", currentUserHasActiveTimeSlot);
                             setTimeSlotActive(currentUserHasActiveTimeSlot);
                             setTimeSlotInfo(userData.timeSlot);
                         }
 
                         // Get active roommate connections
+                        console.log("User roommate connections:", userData.roommateConnections);
                         if (userData.roommateConnections && userData.roommateConnections.length > 0) {
+                            console.log("Fetching roommate details for:", userData.roommateConnections);
                             // Fetch user details for each connection
                             const roommateDetails = await Promise.all(
                                 userData.roommateConnections.map(async (uid) => {
                                     const roommateDoc = await getDoc(doc(db, 'users', uid));
+                                    console.log("Roommate document exists:", uid, roommateDoc.exists());
                                     if (roommateDoc.exists()) {
                                         return {
                                             uid: uid,
@@ -112,13 +132,16 @@ const RoomSelection = () => {
                             );
 
                             const validRoommates = roommateDetails.filter(roommate => roommate !== null);
+                            console.log("Valid roommates:", validRoommates);
                             setActiveRoommates(validRoommates);
 
                             // Check if we should be in "group selection" mode
                             setGroupSelection(validRoommates.length > 0);
+                            console.log("Group selection mode:", validRoommates.length > 0);
 
                             // Check if any roommate already has a room
                             const roommateWithRoom = validRoommates.find(roommate => roommate.selectedRoom);
+                            console.log("Roommate with room:", roommateWithRoom);
                             if (roommateWithRoom) {
                                 setHasExistingRoom(true);
                             }
@@ -128,6 +151,7 @@ const RoomSelection = () => {
                                 const activeRoommateTimeSlot = validRoommates.find(roommate =>
                                     roommate.timeSlot && checkTimeSlot(roommate.timeSlot)
                                 );
+                                console.log("Active roommate time slot:", activeRoommateTimeSlot);
 
                                 if (activeRoommateTimeSlot) {
                                     setTimeSlotActive(true);
@@ -137,12 +161,18 @@ const RoomSelection = () => {
                         }
 
                         // Get dorm data from Firestore
+                        console.log("dormId from router:", dormId);
                         if (dormId) {
+                            console.log("Fetching dorm document for:", dormId);
                             const dormDoc = await getDoc(doc(db, 'dorms', dormId));
+                            console.log("Dorm document exists:", dormDoc.exists());
+
                             if (dormDoc.exists()) {
+                                const dormData = dormDoc.data();
+                                console.log("Dorm data:", dormData);
                                 setDorm({
                                     id: dormId,
-                                    ...dormDoc.data()
+                                    ...dormData
                                 });
                             } else {
                                 console.error('Dorm not found in Firestore');
@@ -151,33 +181,74 @@ const RoomSelection = () => {
                             }
 
                             // Fetch rooms data from Firestore
+                            console.log("Attempting to fetch rooms from collection:", `dorms/${dormId}/rooms`);
                             const roomsCollectionRef = collection(db, 'dorms', dormId, 'rooms');
                             const roomsSnapshot = await getDocs(roomsCollectionRef);
+                            console.log("Rooms snapshot empty:", roomsSnapshot.empty);
+                            console.log("Rooms snapshot size:", roomsSnapshot.size);
 
                             if (!roomsSnapshot.empty) {
-                                const roomsData = roomsSnapshot.docs.map(doc => ({
-                                    id: doc.id,
-                                    ...doc.data()
-                                }));
+                                const roomsData = roomsSnapshot.docs.map(doc => {
+                                    console.log("Room document ID:", doc.id);
+                                    console.log("Room data:", doc.data());
+                                    return {
+                                        id: doc.id,
+                                        ...doc.data()
+                                    };
+                                });
+                                console.log("Processed rooms data:", roomsData);
                                 setRooms(roomsData);
                             } else {
                                 console.log('No rooms found for this dorm');
+
+                                // Try fetching from top-level rooms collection as a fallback
+                                console.log("Attempting to fetch from top-level rooms collection with filter");
+                                try {
+                                    const topLevelRoomsRef = collection(db, 'rooms');
+                                    const q = query(topLevelRoomsRef, where("dormId", "==", dormId));
+                                    const topLevelSnapshot = await getDocs(q);
+                                    console.log("Top-level rooms snapshot empty:", topLevelSnapshot.empty);
+                                    console.log("Top-level rooms snapshot size:", topLevelSnapshot.size);
+
+                                    if (!topLevelSnapshot.empty) {
+                                        const topLevelRoomsData = topLevelSnapshot.docs.map(doc => ({
+                                            id: doc.id,
+                                            ...doc.data()
+                                        }));
+                                        console.log("Top-level rooms data:", topLevelRoomsData);
+                                        setRooms(topLevelRoomsData);
+                                    } else {
+                                        console.log("No rooms found in top-level collection for this dorm either");
+                                    }
+                                } catch (error) {
+                                    console.error("Error fetching from top-level rooms:", error);
+                                }
                             }
+                        } else {
+                            console.error("No dormId in router query parameters");
                         }
+                    } else {
+                        console.error("User document doesn't exist");
                     }
 
+                    console.log("Finished loading data, setting loading to false");
                     setLoading(false);
                 } catch (error) {
                     console.error('Error fetching data:', error);
+                    console.log("Error stack:", error.stack);
                     setLoading(false);
                 }
             } else {
                 // User is signed out, redirect to login
+                console.log("No authenticated user, redirecting to login");
                 router.push('/login');
             }
         });
 
-        return () => unsubscribe();
+        return () => {
+            console.log("Cleaning up auth state listener");
+            unsubscribe();
+        };
     }, [router, dormId]);
 
     // Handler for filter changes
@@ -200,6 +271,15 @@ const RoomSelection = () => {
         if (hasExistingRoom) {
             setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
             return;
+        }
+
+        // Check for insufficient capacity
+        if (groupSelection) {
+            const groupSize = activeRoommates.length + 1;
+            if (room.capacity < groupSize) {
+                setErrorMessage(`This room cannot accommodate your group of ${groupSize} people. Maximum capacity is ${room.capacity}.`);
+                return;
+            }
         }
 
         setSelectedRoom(room);
@@ -362,8 +442,20 @@ const RoomSelection = () => {
         }
     };
 
+    // Add this right before the filteredRooms definition
+    console.log("Computing filtered rooms");
+
     // Filter rooms based on selected criteria
     const filteredRooms = rooms.filter(room => {
+        console.log(`Room ${room.roomNumber} - Floor: ${room.floor}, Selected Floor: ${selectedFloor}, Match: ${room.floor === selectedFloor}`);
+        console.log(`Room ${room.roomNumber} - Type: ${room.type}, Filter Type: ${filters.roomType}, Match: ${!filters.roomType || room.type === filters.roomType}`);
+        console.log(`Room ${room.roomNumber} - Occupancy: ${room.occupancyStatus}, Match: ${filters.availability !== 'available' || room.occupancyStatus === 'available'}`);
+
+        if (groupSelection) {
+            const groupSize = activeRoommates.length + 1;
+            console.log(`Room ${room.roomNumber} - Capacity: ${room.capacity}, Group Size: ${groupSize}, Match: ${room.capacity >= groupSize}`);
+        }
+
         // Filter by floor
         if (selectedFloor && room.floor !== selectedFloor) {
             return false;
@@ -379,14 +471,25 @@ const RoomSelection = () => {
             return false;
         }
 
-        // If in group selection mode, filter by capacity to ensure enough space for the group
-        if (groupSelection) {
-            const groupSize = activeRoommates.length + 1; // +1 for the current user
-            return room.capacity >= groupSize;
-        }
-
+        // Always show rooms regardless of capacity
         return true;
     });
+
+    // After filtering, mark rooms with insufficient capacity for the group
+    if (groupSelection) {
+        const groupSize = activeRoommates.length + 1; // +1 for the current user
+        filteredRooms.forEach(room => {
+            room.insufficientCapacity = room.capacity < groupSize;
+        });
+    }
+
+    // Add these after the filteredRooms definition
+    console.log("Filtered rooms length:", filteredRooms.length);
+    console.log("Filtered rooms:", filteredRooms);
+    console.log("Has existing room:", hasExistingRoom);
+    console.log("Time slot active:", timeSlotActive);
+    console.log("Error message:", errorMessage);
+    console.log("Loading state:", loading);
 
     if (loading) {
         return (
@@ -538,6 +641,17 @@ const RoomSelection = () => {
                     )}
                 </div>
 
+                {/* Group Selection Capacity Notice */}
+                {groupSelection && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                        <h3 className="font-semibold text-blue-800 mb-2">Group Selection Information</h3>
+                        <p className="text-blue-700">
+                            Your group has {activeRoommates.length + 1} people. Rooms with insufficient
+                            capacity will be shown but cannot be selected.
+                        </p>
+                    </div>
+                )}
+
                 {/* Existing Room Warning/Cancellation */}
                 {hasExistingRoom && (
                     <div className="bg-yellow-50 border border-yellow-400 rounded-lg p-6 mb-6 shadow-md">
@@ -683,8 +797,8 @@ const RoomSelection = () => {
                                     <div
                                         key={room.id}
                                         className={`border rounded-lg p-5 ${room.occupancyStatus === 'available'
-                                                ? 'border-green-200 bg-green-50 hover:shadow-md transition duration-200'
-                                                : 'border-gray-200 bg-gray-50'
+                                            ? 'border-green-200 bg-green-50 hover:shadow-md transition duration-200'
+                                            : 'border-gray-200 bg-gray-50'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start">
@@ -712,27 +826,29 @@ const RoomSelection = () => {
                                                 </div>
 
                                                 {groupSelection && (
-                                                    <div className={`mt-3 text-sm font-medium ${room.capacity >= activeRoommates.length + 1
-                                                            ? 'text-green-700'
-                                                            : 'text-red-700'
+                                                    <div className={`mt-3 text-sm font-medium ${room.insufficientCapacity
+                                                        ? 'text-red-700'
+                                                        : 'text-green-700'
                                                         }`}>
-                                                        {room.capacity >= activeRoommates.length + 1
-                                                            ? `✓ Suitable for your group of ${activeRoommates.length + 1}`
-                                                            : `✗ Not enough space for your group of ${activeRoommates.length + 1}`}
+                                                        {room.insufficientCapacity
+                                                            ? `✗ Not enough space for your group of ${activeRoommates.length + 1}`
+                                                            : `✓ Suitable for your group of ${activeRoommates.length + 1}`}
                                                     </div>
                                                 )}
                                             </div>
                                             <div>
-                                                {room.occupancyStatus === 'available' && (!groupSelection || room.capacity >= activeRoommates.length + 1) ? (
+                                                {room.occupancyStatus === 'available' ? (
                                                     <button
                                                         onClick={() => handleRoomSelect(room)}
-                                                        className={`py-2 px-4 rounded-md font-semibold ${hasExistingRoom || !timeSlotActive
+                                                        className={`py-2 px-4 rounded-md font-semibold ${hasExistingRoom || !timeSlotActive || (groupSelection && room.insufficientCapacity)
                                                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                                 : 'bg-yellow-600 hover:bg-yellow-700 text-black transition duration-200'
                                                             }`}
-                                                        disabled={hasExistingRoom || !timeSlotActive}
+                                                        disabled={hasExistingRoom || !timeSlotActive || (groupSelection && room.insufficientCapacity)}
                                                     >
-                                                        Select Room
+                                                        {groupSelection && room.insufficientCapacity
+                                                            ? 'Insufficient Capacity'
+                                                            : 'Select Room'}
                                                     </button>
                                                 ) : (
                                                     <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-md inline-block">Unavailable</span>
