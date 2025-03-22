@@ -24,6 +24,7 @@ const RoomSelection = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [timeSlotActive, setTimeSlotActive] = useState(false);
     const [timeSlotInfo, setTimeSlotInfo] = useState(null);
+    const [activeRoommateWithTimeSlot, setActiveRoommateWithTimeSlot] = useState(null);
 
     const router = useRouter();
     const { dormId } = router.query;
@@ -148,14 +149,15 @@ const RoomSelection = () => {
 
                             // For group selection, at least one person in the group must have an active time slot
                             if (!currentUserHasActiveTimeSlot) {
-                                const activeRoommateTimeSlot = validRoommates.find(roommate =>
+                                const roommateWithActiveSlot = validRoommates.find(roommate =>
                                     roommate.timeSlot && checkTimeSlot(roommate.timeSlot)
                                 );
-                                console.log("Active roommate time slot:", activeRoommateTimeSlot);
 
-                                if (activeRoommateTimeSlot) {
-                                    setTimeSlotActive(true);
-                                    setTimeSlotInfo(activeRoommateTimeSlot.timeSlot);
+                                if (roommateWithActiveSlot) {
+                                    console.log("Roommate with active time slot:", roommateWithActiveSlot);
+                                    // We're just storing this information to display to the user
+                                    // but NOT setting timeSlotActive to true
+                                    setActiveRoommateWithTimeSlot(roommateWithActiveSlot);
                                 }
                             }
                         }
@@ -624,22 +626,30 @@ const RoomSelection = () => {
                                     </svg>
                                     <p className="text-green-800 font-semibold">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
                                 </div>
+                            ) : activeRoommateWithTimeSlot ? (
+                                // New section for when a roommate has an active time slot
+                                <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-yellow-800">
+                                        Your time slot is not active. Your roommate {activeRoommateWithTimeSlot.firstName} {activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.
+                                    </p>
+                                </div>
+                            ) : new Date(timeSlotInfo.startTime) > new Date() ? (
+                                <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-yellow-800">Your time slot has not started yet. Please return during your assigned time.</p>
+                                </div>
                             ) : (
-                                new Date(timeSlotInfo.startTime) > new Date() ? (
-                                    <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p className="text-yellow-800">Your time slot has not started yet. Please return during your assigned time.</p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-red-100 p-3 rounded-md border border-red-200 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p className="text-red-800">Your time slot has expired. You may still select a room if available.</p>
-                                    </div>
-                                )
+                                <div className="bg-red-100 p-3 rounded-md border border-red-200 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-red-800">Your time slot has expired. You cannot select a room at this time.</p>
+                                </div>
                             )}
                         </div>
                     ) : (
