@@ -671,11 +671,25 @@ const RoomSelection = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <p className="text-yellow-800">You have not been assigned a room selection time slot yet. Please check back later or contact housing services.</p>
+                        <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200">
+                            <div className="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div>
+                                    <p className="text-yellow-800">You have not been assigned a room selection time slot yet. Please check back later or contact housing services.</p>
+
+                                    {activeRoommates.length > 0 && (
+                                        <p className="text-yellow-700 text-sm mt-2">
+                                            {activeRoommateWithTimeSlot ? (
+                                                <>Your roommate {activeRoommateWithTimeSlot.firstName} {activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.</>
+                                            ) : (
+                                                <>None of your roommates have an active time slot right now either.</>
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
