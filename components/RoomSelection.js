@@ -648,7 +648,7 @@ const RoomSelection = () => {
                                                     roommatesWithActiveTimeSlots.length === activeRoommates.length ? (
                                                         <>All of your roommates also have active time slots.</>
                                                     ) : (
-                                                        <>Your roommate{roommatesWithActiveTimeSlots.length > 1 ? 's' : ''} {roommatesWithActiveTimeSlots.map(r => `${r.firstName}`).join(', ')} also {roommatesWithActiveTimeSlots.length > 1 ? 'have' : 'has'} active time slots.</>
+                                                        <>Your roommate{roommatesWithActiveTimeSlots.length > 1 ? 's' : ''} {roommatesWithActiveTimeSlots.map(r => `${r.firstName} ${r.lastName}`).join(', ')} also {roommatesWithActiveTimeSlots.length > 1 ? 'have' : 'has'} active time slots.</>
                                                     )
                                                 ) : (
                                                     <>You are the only one in your group with an active time slot right now.</>
