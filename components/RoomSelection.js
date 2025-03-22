@@ -911,7 +911,7 @@ const RoomSelection = () => {
                                                 </div>
 
                                                 {groupSelection && (
-                                                    <div className={`mt-3 text-sm font-medium ${room.insufficientCapacity
+                                                    <div className={`mt-3 text-xs font-medium ${room.insufficientCapacity
                                                         ? 'text-red-700'
                                                         : 'text-green-700'
                                                         }`}>
