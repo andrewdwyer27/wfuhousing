@@ -639,7 +639,23 @@ const RoomSelection = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p className="text-green-800 font-semibold">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
+                                    <div>
+                                        <p className="text-green-800 font-semibold">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
+
+                                        {activeRoommates.length > 0 && (
+                                            <p className="text-green-700 text-sm mt-1">
+                                                {roommatesWithActiveTimeSlots.length > 0 ? (
+                                                    roommatesWithActiveTimeSlots.length === activeRoommates.length ? (
+                                                        <>All of your roommates also have active time slots.</>
+                                                    ) : (
+                                                        <>Your roommate{roommatesWithActiveTimeSlots.length > 1 ? 's' : ''} {roommatesWithActiveTimeSlots.map(r => `${r.firstName}`).join(', ')} also {roommatesWithActiveTimeSlots.length > 1 ? 'have' : 'has'} active time slots.</>
+                                                    )
+                                                ) : (
+                                                    <>You are the only one in your group with an active time slot right now.</>
+                                                )}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             ) : roommatesWithActiveTimeSlots.length > 0 ? (
                                 <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
