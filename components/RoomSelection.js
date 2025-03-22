@@ -11,7 +11,7 @@ const RoomSelection = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [activeRoommates, setActiveRoommates] = useState([]);
-    const [selectedFloor, setSelectedFloor] = useState('1');
+    const [selectedFloor, setSelectedFloor] = useState('all');
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [confirmationOpen, setConfirmationOpen] = useState(false);
     const [reservationSuccess, setReservationSuccess] = useState(false);
@@ -458,8 +458,9 @@ const RoomSelection = () => {
     console.log("Computing filtered rooms");
 
     // Filter rooms based on selected criteria
+    // Then, modify the filter function to handle the "all" option
     const filteredRooms = rooms.filter(room => {
-        console.log(`Room ${room.roomNumber} - Floor: ${room.floor}, Selected Floor: ${selectedFloor}, Match: ${room.floor === selectedFloor}`);
+        console.log(`Room ${room.roomNumber} - Floor: ${room.floor}, Selected Floor: ${selectedFloor}, Match: ${selectedFloor === 'all' || room.floor === selectedFloor}`);
         console.log(`Room ${room.roomNumber} - Type: ${room.type}, Filter Type: ${filters.roomType}, Match: ${!filters.roomType || room.type === filters.roomType}`);
         console.log(`Room ${room.roomNumber} - Occupancy: ${room.occupancyStatus}, Match: ${filters.availability !== 'available' || room.occupancyStatus === 'available'}`);
 
@@ -468,22 +469,20 @@ const RoomSelection = () => {
             console.log(`Room ${room.roomNumber} - Capacity: ${room.capacity}, Group Size: ${groupSize}, Match: ${room.capacity >= groupSize}`);
         }
 
-        // Filter by floor
-        if (selectedFloor && room.floor !== selectedFloor) {
+        // Filter by floor - if "all" is selected, include rooms from all floors
+        if (selectedFloor !== 'all' && room.floor !== selectedFloor) {
             return false;
         }
 
-        // Filter by room type
+        // Other filters remain the same
         if (filters.roomType && room.type !== filters.roomType) {
             return false;
         }
 
-        // Filter by availability
         if (filters.availability === 'available' && room.occupancyStatus !== 'available') {
             return false;
         }
 
-        // Always show rooms regardless of capacity
         return true;
     });
 
@@ -764,6 +763,7 @@ const RoomSelection = () => {
                                     onChange={(e) => setSelectedFloor(e.target.value)}
                                     className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                                 >
+                                    <option value="all">All Floors</option>
                                     <option value="1">First Floor</option>
                                     <option value="2">Second Floor</option>
                                     <option value="3">Third Floor</option>
@@ -792,7 +792,7 @@ const RoomSelection = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                             </svg>
-                            Available Rooms on Floor {selectedFloor}
+                            Available Rooms {selectedFloor === 'all' ? 'on All Floors' : `on Floor ${selectedFloor}`}
                         </h3>
 
                         {filteredRooms.length === 0 ? (
