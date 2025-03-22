@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, writeBatch, increment } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -340,6 +340,12 @@ const RoomSelection = () => {
                 lastUpdated: new Date().toISOString()
             });
 
+            // Update the dorm document to decrement available rooms count
+            const dormRef = doc(db, 'dorms', dormId);
+            batch.update(dormRef, {
+                availableRooms: increment(-1) // Decrement by 1
+            });
+
             // Commit all updates in a single batch
             await batch.commit();
 
@@ -396,6 +402,12 @@ const RoomSelection = () => {
                 occupancyStatus: 'available',
                 occupants: [],
                 lastUpdated: new Date().toISOString()
+            });
+
+            // Update the dorm document to increment available rooms count
+            const dormRef = doc(db, 'dorms', existingRoom.dormId);
+            batch.update(dormRef, {
+                availableRooms: increment(1) // Increment by 1
             });
 
             // Commit all updates in a single batch
@@ -841,13 +853,13 @@ const RoomSelection = () => {
                                                     <button
                                                         onClick={() => handleRoomSelect(room)}
                                                         className={`py-2 px-4 rounded-md font-semibold ${hasExistingRoom || !timeSlotActive || (groupSelection && room.insufficientCapacity)
-                                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                                : 'bg-yellow-600 hover:bg-yellow-700 text-black transition duration-200'
+                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            : 'bg-yellow-600 hover:bg-yellow-700 text-black transition duration-200'
                                                             }`}
                                                         disabled={hasExistingRoom || !timeSlotActive || (groupSelection && room.insufficientCapacity)}
                                                     >
                                                         {groupSelection && room.insufficientCapacity
-                                                            ? 'Insufficient Capacity'
+                                                            ? 'Exceeded'
                                                             : 'Select Room'}
                                                     </button>
                                                 ) : (

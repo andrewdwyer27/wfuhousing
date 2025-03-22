@@ -37,6 +37,8 @@ const RoommateFinder = () => {
         visitors: '',
         interests: []
     });
+    const [leaveConfirmModal, setLeaveConfirmModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const router = useRouter();
 
     const interestOptions = [
@@ -506,26 +508,119 @@ const RoommateFinder = () => {
             console.error('Error canceling request:', error);
         }
     };
+    // Add these functions to your RoommateFinder component
 
-    // Open confirmation modal for roommate removal
-    const openRemoveConfirmation = (roommate) => {
-        // Check if either user has a room selected
-        const hasRoom = user.selectedRoom || roommate.selectedRoom;
+    // Leave all current roommates
+    const leaveRoommates = async () => {
+        if (!user) return;
 
-        if (hasRoom) {
-            setErrorMessage("You cannot remove a roommate while either of you has a room selected. Please cancel your room selection first.");
+        // Check if user has a room selected
+        if (user.selectedRoom) {
+            setErrorMessage("You cannot leave roommates while you have a room selected. Please cancel your room selection first.");
             return;
         }
 
-        // Set the roommate to remove and open the modal
-        setRoommateToRemove(roommate);
-        setConfirmModal(true);
+        try {
+            setLoading(true);
+            console.log("Starting roommate departure process...");
+
+            // Step 1: Get the current user's data
+            const myDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!myDoc.exists()) {
+                console.error('Current user document not found');
+                setLoading(false);
+                return;
+            }
+            const myData = myDoc.data();
+
+            // Step 2: Get my existing roommate connections
+            const myConnections = myData.roommateConnections || [];
+
+            if (myConnections.length === 0) {
+                setErrorMessage("You don't have any roommates to leave.");
+                setLoading(false);
+                return;
+            }
+
+            console.log("Current roommate connections:", myConnections);
+
+            // Step 3: Fetch all roommate user documents
+            const roommateDocs = [];
+            for (const uid of myConnections) {
+                const roommateDoc = await getDoc(doc(db, 'users', uid));
+                if (roommateDoc.exists()) {
+                    roommateDocs.push({
+                        uid: uid,
+                        data: roommateDoc.data()
+                    });
+                } else {
+                    console.warn(`Roommate document ${uid} not found, skipping`);
+                }
+            }
+
+            // Step 4: Create a batch to update all users
+            const batch = writeBatch(db);
+
+            // Update current user - remove all roommate connections
+            batch.update(doc(db, 'users', user.uid), {
+                roommateConnections: []
+            });
+
+            // For each roommate, remove the current user from their connections
+            for (const roommateDoc of roommateDocs) {
+                const roommateId = roommateDoc.uid;
+                const roommateData = roommateDoc.data;
+
+                // Get current roommate connections and remove the current user
+                const roommateConnections = roommateData.roommateConnections || [];
+                const updatedConnections = roommateConnections.filter(id => id !== user.uid);
+
+                console.log(`Updating roommate ${roommateId} connections:`, updatedConnections);
+
+                batch.update(doc(db, 'users', roommateId), {
+                    roommateConnections: updatedConnections
+                });
+            }
+
+            // Step 5: Commit all updates in a single batch
+            console.log("Committing batch updates for all users...");
+            await batch.commit();
+            console.log("Batch committed successfully");
+
+            // Step 6: Update local state
+            setActiveRoommates([]);
+
+            // Show success message
+            setErrorMessage("");
+            setSuccessMessage("You have successfully left all roommate connections.");
+
+            // Force reload to ensure fresh data is displayed
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error leaving roommates:', error);
+            setErrorMessage('Error leaving roommates: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Cancel roommate removal
-    const cancelRemove = () => {
-        setConfirmModal(false);
-        setRoommateToRemove(null);
+    // Add a confirmation modal for leaving roommates
+    const openLeaveConfirmation = () => {
+        // Check if user has a room selected
+        if (user.selectedRoom) {
+            setErrorMessage("You cannot leave roommates while you have a room selected. Please cancel your room selection first.");
+            return;
+        }
+
+        setLeaveConfirmModal(true);
+    };
+
+    // Cancel leave roommates confirmation
+    const cancelLeave = () => {
+        setLeaveConfirmModal(false);
     };
 
     if (loading) {
@@ -758,12 +853,24 @@ const RoommateFinder = () => {
                 {/* Active Roommates Section */}
                 {activeRoommates.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-                        <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Active Roommates ({activeRoommates.length})
-                        </h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Active Roommates ({activeRoommates.length})
+                            </h2>
+                            <button
+                                onClick={openLeaveConfirmation}
+                                className="bg-red-50 hover:bg-red-100 text-red-600 py-1 px-3 rounded text-sm font-medium transition duration-200 flex items-center border border-red-200"
+                                disabled={user?.selectedRoom}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Leave Roommates
+                            </button>
+                        </div>
                         <div className="space-y-4">
                             {activeRoommates.map(roommate => {
                                 // Check if either user has a room selected
@@ -1329,6 +1436,41 @@ const RoommateFinder = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
+                {/* Leave Roommates Confirmation Modal */}
+                {leaveConfirmModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                            <h3 className="text-xl font-bold text-gray-900 mb-4">Leave All Roommates</h3>
+                            <p className="text-gray-700 mb-6">
+                                Are you sure you want to leave all your roommate connections? This will remove you from all roommate groups and cannot be undone.
+                            </p>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={cancelLeave}
+                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium transition duration-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={leaveRoommates}
+                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition duration-200"
+                                >
+                                    Yes, Leave Roommates
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Success message display */}
+                {successMessage && (
+                    <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-sm flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <p>{successMessage}</p>
                     </div>
                 )}
             </div>
