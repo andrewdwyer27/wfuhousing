@@ -26,6 +26,7 @@ const RoomSelection = () => {
     const [timeSlotInfo, setTimeSlotInfo] = useState(null);
     const [activeRoommateWithTimeSlot, setActiveRoommateWithTimeSlot] = useState(null);
 
+
     const router = useRouter();
     const { dormId } = router.query;
 
@@ -147,8 +148,8 @@ const RoomSelection = () => {
                                 setHasExistingRoom(true);
                             }
 
-                            // For group selection, at least one person in the group must have an active time slot
-                            if (!currentUserHasActiveTimeSlot) {
+                            // Track which roommate has an active time slot (for display purposes only)
+                            if (validRoommates.length > 0) {
                                 const roommateWithActiveSlot = validRoommates.find(roommate =>
                                     roommate.timeSlot && checkTimeSlot(roommate.timeSlot)
                                 );
@@ -156,7 +157,6 @@ const RoomSelection = () => {
                                 if (roommateWithActiveSlot) {
                                     console.log("Roommate with active time slot:", roommateWithActiveSlot);
                                     // We're just storing this information to display to the user
-                                    // but NOT setting timeSlotActive to true
                                     setActiveRoommateWithTimeSlot(roommateWithActiveSlot);
                                 }
                             }
@@ -264,12 +264,17 @@ const RoomSelection = () => {
 
     // Handler for selecting a room
     const handleRoomSelect = (room) => {
-        // Check if user has an active time slot
+        // Check if user has an active time slot (not just any roommate)
         if (!timeSlotActive) {
-            setErrorMessage("You cannot select a room because it's not your assigned time slot yet.");
+            if (activeRoommateWithTimeSlot) {
+                setErrorMessage(`You cannot select a room because it's not your assigned time slot. ${activeRoommateWithTimeSlot.firstName} ${activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.`);
+            } else {
+                setErrorMessage("You cannot select a room because it's not your assigned time slot yet.");
+            }
             return;
         }
 
+        // Rest of your existing function...
         if (hasExistingRoom) {
             setErrorMessage('You or one of your roommates already has a room selected. Please cancel your current room before selecting a new one.');
             return;
@@ -627,7 +632,6 @@ const RoomSelection = () => {
                                     <p className="text-green-800 font-semibold">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
                                 </div>
                             ) : activeRoommateWithTimeSlot ? (
-                                // New section for when a roommate has an active time slot
                                 <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -641,14 +645,28 @@ const RoomSelection = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p className="text-yellow-800">Your time slot has not started yet. Please return during your assigned time.</p>
+                                    <div>
+                                        <p className="text-yellow-800">Your time slot has not started yet. Please return during your assigned time.</p>
+                                        {activeRoommates.length > 0 && (
+                                            <p className="text-yellow-700 text-sm mt-1">
+                                                None of your roommates have an active time slot right now either.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="bg-red-100 p-3 rounded-md border border-red-200 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p className="text-red-800">Your time slot has expired. You cannot select a room at this time.</p>
+                                    <div>
+                                        <p className="text-red-800">Your time slot has expired. You cannot select a room at this time.</p>
+                                        {activeRoommates.length > 0 && (
+                                            <p className="text-red-700 text-sm mt-1">
+                                                None of your roommates have an active time slot right now either.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
