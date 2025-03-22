@@ -694,17 +694,6 @@ const RoomSelection = () => {
                     )}
                 </div>
 
-                {/* Group Selection Capacity Notice */}
-                {groupSelection && (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-                        <h3 className="font-semibold text-blue-800 mb-2">Group Selection Information</h3>
-                        <p className="text-blue-700">
-                            Your group has {activeRoommates.length + 1} people. Rooms with insufficient
-                            capacity will be shown but cannot be selected.
-                        </p>
-                    </div>
-                )}
-
                 {/* Existing Room Warning/Cancellation */}
                 {hasExistingRoom && (
                     <div className="bg-yellow-50 border border-yellow-400 rounded-lg p-6 mb-6 shadow-md">
@@ -901,7 +890,7 @@ const RoomSelection = () => {
                                                         disabled={hasExistingRoom || !timeSlotActive || (groupSelection && room.insufficientCapacity)}
                                                     >
                                                         {groupSelection && room.insufficientCapacity
-                                                            ? 'Exceeded'
+                                                            ? 'Capacity'
                                                             : 'Select Room'}
                                                     </button>
                                                 ) : (
