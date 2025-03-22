@@ -24,7 +24,7 @@ const RoomSelection = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [timeSlotActive, setTimeSlotActive] = useState(false);
     const [timeSlotInfo, setTimeSlotInfo] = useState(null);
-    const [activeRoommateWithTimeSlot, setActiveRoommateWithTimeSlot] = useState(null);
+    const [roommatesWithActiveTimeSlots, setRoommatesWithActiveTimeSlots] = useState([]);
 
 
     const router = useRouter();
@@ -150,14 +150,15 @@ const RoomSelection = () => {
 
                             // Track which roommate has an active time slot (for display purposes only)
                             if (validRoommates.length > 0) {
-                                const roommateWithActiveSlot = validRoommates.find(roommate =>
+                                const roommatesWithActiveSlots = validRoommates.filter(roommate =>
                                     roommate.timeSlot && checkTimeSlot(roommate.timeSlot)
                                 );
 
-                                if (roommateWithActiveSlot) {
-                                    console.log("Roommate with active time slot:", roommateWithActiveSlot);
-                                    // We're just storing this information to display to the user
-                                    setActiveRoommateWithTimeSlot(roommateWithActiveSlot);
+                                if (roommatesWithActiveSlots.length > 0) {
+                                    console.log("Roommates with active time slots:", roommatesWithActiveSlots);
+                                    setRoommatesWithActiveTimeSlots(roommatesWithActiveSlots);
+                                } else {
+                                    setRoommatesWithActiveTimeSlots([]);
                                 }
                             }
                         }
@@ -266,8 +267,17 @@ const RoomSelection = () => {
     const handleRoomSelect = (room) => {
         // Check if user has an active time slot (not just any roommate)
         if (!timeSlotActive) {
-            if (activeRoommateWithTimeSlot) {
-                setErrorMessage(`You cannot select a room because it's not your assigned time slot. ${activeRoommateWithTimeSlot.firstName} ${activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.`);
+            if (roommatesWithActiveTimeSlots.length > 0) {
+                // If there's only one roommate with an active time slot
+                if (roommatesWithActiveTimeSlots.length === 1) {
+                    const roommate = roommatesWithActiveTimeSlots[0];
+                    setErrorMessage(`You cannot select a room because it's not your assigned time slot. ${roommate.firstName} ${roommate.lastName} has an active time slot and should select the room for your group.`);
+                }
+                // If there are multiple roommates with active time slots
+                else {
+                    const roommateNames = roommatesWithActiveTimeSlots.map(r => `${r.firstName} ${r.lastName}`).join(', ');
+                    setErrorMessage(`You cannot select a room because it's not your assigned time slot. Your roommates (${roommateNames}) have active time slots and one of them should select the room for your group.`);
+                }
             } else {
                 setErrorMessage("You cannot select a room because it's not your assigned time slot yet.");
             }
@@ -631,14 +641,26 @@ const RoomSelection = () => {
                                     </svg>
                                     <p className="text-green-800 font-semibold">Your time slot is active! ({getTimeRemaining(timeSlotInfo.endTime)})</p>
                                 </div>
-                            ) : activeRoommateWithTimeSlot ? (
+                            ) : roommatesWithActiveTimeSlots.length > 0 ? (
                                 <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p className="text-yellow-800">
-                                        Your time slot is not active. Your roommate {activeRoommateWithTimeSlot.firstName} {activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.
-                                    </p>
+                                    <div>
+                                        <p className="text-yellow-800">
+                                            Your time slot is not active.
+                                            {roommatesWithActiveTimeSlots.length === 1 ? (
+                                                <> Your roommate {roommatesWithActiveTimeSlots[0].firstName} {roommatesWithActiveTimeSlots[0].lastName} has an active time slot and should select the room for your group.</>
+                                            ) : (
+                                                <> {roommatesWithActiveTimeSlots.length} of your roommates have active time slots. One of them should select the room for your group.</>
+                                            )}
+                                        </p>
+                                        {roommatesWithActiveTimeSlots.length > 1 && (
+                                            <p className="text-yellow-700 text-sm mt-1">
+                                                Roommates with active time slots: {roommatesWithActiveTimeSlots.map(r => `${r.firstName} ${r.lastName}`).join(', ')}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             ) : new Date(timeSlotInfo.startTime) > new Date() ? (
                                 <div className="bg-yellow-100 p-3 rounded-md border border-yellow-200 flex items-center">
@@ -681,8 +703,12 @@ const RoomSelection = () => {
 
                                     {activeRoommates.length > 0 && (
                                         <p className="text-yellow-700 text-sm mt-2">
-                                            {activeRoommateWithTimeSlot ? (
-                                                <>Your roommate {activeRoommateWithTimeSlot.firstName} {activeRoommateWithTimeSlot.lastName} has an active time slot and should select the room for your group.</>
+                                            {roommatesWithActiveTimeSlots.length > 0 ? (
+                                                roommatesWithActiveTimeSlots.length === 1 ? (
+                                                    <>Your roommate {roommatesWithActiveTimeSlots[0].firstName} {roommatesWithActiveTimeSlots[0].lastName} has an active time slot and should select the room for your group.</>
+                                                ) : (
+                                                    <>Multiple roommates have active time slots: {roommatesWithActiveTimeSlots.map(r => `${r.firstName} ${r.lastName}`).join(', ')}. One of them should select the room for your group.</>
+                                                )
                                             ) : (
                                                 <>None of your roommates have an active time slot right now either.</>
                                             )}
