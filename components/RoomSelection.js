@@ -861,55 +861,6 @@ const RoomSelection = () => {
                         )}
                     </div>
                 </div>
-
-                {/* Floor Plan Section */}
-                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-                    <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                        </svg>
-                        Floor Plan - Floor {selectedFloor}
-                    </h2>
-                    <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
-                        <div className="text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
-                            <p className="text-gray-500">Interactive floor plan would be displayed here</p>
-                            <p className="text-gray-400 text-sm mt-2">Click on a room in the floor plan to view details</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Helpful Information */}
-                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-                    <h2 className="text-xl font-bold mb-4 text-gray-900 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Room Selection Information
-                    </h2>
-                    <ul className="space-y-3">
-                        <li className="flex items-start">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-gray-700 text-sm">Once you select a room, your selection is final and cannot be changed unless you cancel it.</span>
-                        </li>
-                        <li className="flex items-start">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-gray-700 text-sm">Room prices are per semester and will be added to your student account.</span>
-                        </li>
-                        <li className="flex items-start">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-gray-700 text-sm">If you have any questions or issues, please contact Housing Services at housing@wfu.edu or (555) 123-4567.</span>
-                        </li>
-                    </ul>
-                </div>
             </div>
 
             {/* Footer */}
