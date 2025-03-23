@@ -53,14 +53,18 @@ const PopulateDataPage = () => {
                     <p className="mb-4">This tool will populate your Firestore database with sample data for testing the WakeRooms application. Here's what each button does:</p>
 
                     <ul className="list-disc pl-5 space-y-2">
-                        <li><strong>Populate Dorms & Rooms</strong>: Creates dorm buildings (Magnolia, Taylor, Collins, Bostwick) and adds room data for each.</li>
-                        <li><strong>Populate User Data</strong>: Creates 5 sample users with different roommate preferences.</li>
+                        <li><strong>Populate Dorms & Rooms</strong>: Creates dorm buildings (Magnolia, Taylor, Collins, Bostwick) and adds empty room data for each. All rooms will be set as fully available with no occupants assigned.</li>
+                        <li><strong>Populate User Data</strong>: Creates 5 sample users with different roommate preferences. These users are not assigned to any rooms.</li>
                         <li><strong>Add Roommate Requests</strong>: Creates sample roommate requests between users.</li>
-                        <li><strong>Populate All Data</strong>: Runs all of the above operations in sequence.</li>
+                        <li><strong>Populate All Data</strong>: Runs all of the above operations in sequence. Rooms will be created as fully available with no occupants assigned.</li>
                     </ul>
 
                     <div className="mt-6 p-4 bg-yellow-50 rounded-md">
                         <p className="text-sm"><strong>Warning:</strong> This tool will overwrite any existing data with the same IDs. Use with caution on production databases.</p>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-blue-50 rounded-md">
+                        <p className="text-sm"><strong>Note:</strong> Room occupants will not be populated. This tool only creates the structure of dorms and empty rooms, leaving room assignments to be managed separately.</p>
                     </div>
                 </div>
             </div>

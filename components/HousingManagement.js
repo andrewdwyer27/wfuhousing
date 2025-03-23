@@ -9,13 +9,17 @@ import {
   serverTimestamp,
   query,
   orderBy,
-  writeBatch
+  writeBatch,
+  where,
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 const HousingManagement = () => {
   // States for dorm management
   const [dorms, setDorms] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,15 +36,44 @@ const HousingManagement = () => {
     roomNumber: '',
     capacity: 1,
     floor: 1,
-    isSuite: false,
-    isAvailable: true
+    type: 'standard'
   });
 
-  // Fetch dorms on component mount
+  // Fetch dorms and users on component mount
   useEffect(() => {
-    fetchDorms();
+    fetchDormsAndUsers();
     // Initialize empty selected rooms object
     setSelectedRooms({});
+    
+    // Set up a listener for user changes
+    const fetchUserDetails = async () => {
+      try {
+        const usersCollection = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollection);
+        
+        const usersList = usersSnapshot.docs.map(userDoc => ({
+          id: userDoc.id,
+          ...userDoc.data()
+        }));
+        
+        setUsers(usersList);
+      } catch (err) {
+        console.error('Error fetching user details:', err);
+      }
+    };
+    
+    fetchUserDetails();
+    
+    // You could set up a real-time listener here if needed
+    // const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+    //   const usersList = snapshot.docs.map(doc => ({
+    //     id: doc.id,
+    //     ...doc.data()
+    //   }));
+    //   setUsers(usersList);
+    // });
+    // 
+    // return () => unsubscribe();
   }, []);
 
   // Start editing a dorm
@@ -63,13 +96,12 @@ const HousingManagement = () => {
       roomNumber: '',
       capacity: 1,
       floor: 1,
-      isSuite: false,
-      isAvailable: true
+      type: 'standard'
     });
   };
 
-  // Function to fetch all dorms
-  const fetchDorms = async () => {
+  // Function to fetch all dorms and users
+  const fetchDormsAndUsers = async () => {
     try {
       setLoading(true);
       const dormQuery = query(collection(db, 'dorms'), orderBy('createdAt', 'desc'));
@@ -95,16 +127,28 @@ const HousingManagement = () => {
         // Add rooms to dorm
         dormData.rooms = roomsSnapshot.docs.map(roomDoc => ({
           id: roomDoc.id,
-          ...roomDoc.data()
+          ...roomDoc.data(),
+          occupants: roomDoc.data().occupants || []
         }));
 
         dormsList.push(dormData);
       }
 
       setDorms(dormsList);
+
+      // Fetch users
+      const usersQuery = query(collection(db, 'users'));
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      const usersList = usersSnapshot.docs.map(userDoc => ({
+        id: userDoc.id,
+        ...userDoc.data()
+      }));
+      
+      setUsers(usersList);
     } catch (err) {
-      console.error('Error fetching dorms:', err);
-      setError('Failed to load dorms and rooms');
+      console.error('Error fetching data:', err);
+      setError('Failed to load dorms, rooms, and users');
     } finally {
       setLoading(false);
     }
@@ -152,7 +196,7 @@ const HousingManagement = () => {
         description: ''
       });
       setIsAddingDorm(false);
-      await fetchDorms();
+      await fetchDormsAndUsers();
     } catch (err) {
       console.error('Error adding dorm:', err);
       setError(`Error adding dorm: ${err.message}`);
@@ -187,7 +231,7 @@ const HousingManagement = () => {
       });
       setEditingDormId(null); // Clear editing state
       setCurrentDorm(null);
-      await fetchDorms();
+      await fetchDormsAndUsers();
     } catch (err) {
       console.error('Error updating dorm:', err);
       setError(`Error updating dorm: ${err.message}`);
@@ -212,8 +256,7 @@ const HousingManagement = () => {
         roomNumber: formData.roomNumber.trim(),
         capacity: formData.capacity,
         floor: formData.floor,
-        isSuite: formData.isSuite,
-        isAvailable: formData.isAvailable,
+        type: formData.type,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         occupants: []
@@ -226,7 +269,7 @@ const HousingManagement = () => {
       });
       setIsAddingRoom(false);
       setCurrentDorm(null);
-      await fetchDorms();
+      await fetchDormsAndUsers();
     } catch (err) {
       console.error('Error adding room:', err);
       setError(`Error adding room: ${err.message}`);
@@ -237,8 +280,35 @@ const HousingManagement = () => {
   const handleDeleteDorm = async (dormId) => {
     if (window.confirm('Are you sure you want to delete this dorm? This will also delete all rooms in this dorm.')) {
       try {
+        // First check if any users are assigned to rooms in this dorm
+        const dorm = dorms.find(d => d.id === dormId);
+        if (dorm) {
+          const hasOccupants = dorm.rooms.some(room => room.occupants && room.occupants.length > 0);
+          if (hasOccupants) {
+            if (!window.confirm('This dorm has occupants. Deleting it will remove room assignments for these users. Continue?')) {
+              return;
+            }
+            
+            // If confirmed, remove room assignments for all users in this dorm
+            const batch = writeBatch(db);
+            const roomIds = dorm.rooms.map(room => room.id);
+            
+            for (const user of users) {
+              if (user.selectedRoom && 
+                  user.selectedRoom.dormId === dormId) {
+                batch.update(doc(db, 'users', user.id), {
+                  selectedRoom: null
+                });
+              }
+            }
+            
+            await batch.commit();
+          }
+        }
+        
+        // Now delete the dorm
         await deleteDoc(doc(db, 'dorms', dormId));
-        await fetchDorms();
+        await fetchDormsAndUsers();
       } catch (err) {
         console.error('Error deleting dorm:', err);
         setError(`Error deleting dorm: ${err.message}`);
@@ -250,8 +320,34 @@ const HousingManagement = () => {
   const handleDeleteRoom = async (dormId, roomId) => {
     if (window.confirm('Are you sure you want to delete this room?')) {
       try {
+        // First check if any users are assigned to this room
+        const dorm = dorms.find(d => d.id === dormId);
+        const room = dorm?.rooms.find(r => r.id === roomId);
+        
+        if (room && room.occupants && room.occupants.length > 0) {
+          if (!window.confirm('This room has occupants. Deleting it will remove room assignments for these users. Continue?')) {
+            return;
+          }
+          
+          // Remove room assignments for all users in this room
+          const batch = writeBatch(db);
+          
+          for (const user of users) {
+            if (user.selectedRoom && 
+                user.selectedRoom.dormId === dormId && 
+                user.selectedRoom.id === roomId) {
+              batch.update(doc(db, 'users', user.id), {
+                selectedRoom: null
+              });
+            }
+          }
+          
+          await batch.commit();
+        }
+        
+        // Now delete the room
         await deleteDoc(doc(db, 'dorms', dormId, 'rooms', roomId));
-        await fetchDorms();
+        await fetchDormsAndUsers();
       } catch (err) {
         console.error('Error deleting room:', err);
         setError(`Error deleting room: ${err.message}`);
@@ -259,17 +355,39 @@ const HousingManagement = () => {
     }
   };
 
-  // Toggle room availability
-  const toggleRoomAvailability = async (dormId, roomId, currentStatus) => {
-    try {
-      await updateDoc(doc(db, 'dorms', dormId, 'rooms', roomId), {
-        isAvailable: !currentStatus,
-        updatedAt: serverTimestamp()
-      });
-      await fetchDorms();
-    } catch (err) {
-      console.error('Error updating room availability:', err);
-      setError(`Error updating room: ${err.message}`);
+  // Remove a user from a room
+  const handleRemoveUserFromRoom = async (userId, dormId, roomId) => {
+    if (window.confirm('Are you sure you want to remove this user from the room?')) {
+      try {
+        // Get the room and user references
+        const roomRef = doc(db, 'dorms', dormId, 'rooms', roomId);
+        const userRef = doc(db, 'users', userId);
+        
+        // Get current room data
+        const roomDoc = await getDoc(roomRef);
+        if (!roomDoc.exists()) {
+          throw new Error('Room not found');
+        }
+        
+        const roomData = roomDoc.data();
+        const occupants = roomData.occupants || [];
+        
+        // Update room to remove user from occupants
+        await updateDoc(roomRef, {
+          occupants: occupants.filter(id => id !== userId),
+          updatedAt: serverTimestamp()
+        });
+        
+        // Update user to remove selectedRoom
+        await updateDoc(userRef, {
+          selectedRoom: null
+        });
+        
+        await fetchDormsAndUsers();
+      } catch (err) {
+        console.error('Error removing user from room:', err);
+        setError(`Error removing user: ${err.message}`);
+      }
     }
   };
 
@@ -292,8 +410,33 @@ const HousingManagement = () => {
     if (window.confirm(`Are you sure you want to delete ${roomsToDelete.length} selected room(s)?`)) {
       try {
         setMassActionLoading(true);
+        
+        // Check if any users are assigned to these rooms
+        const dorm = dorms.find(d => d.id === dormId);
+        const roomsWithOccupants = dorm.rooms
+          .filter(room => roomsToDelete.includes(room.id) && room.occupants && room.occupants.length > 0);
+        
+        if (roomsWithOccupants.length > 0) {
+          if (!window.confirm(`${roomsWithOccupants.length} of these rooms have occupants. Deleting them will remove room assignments for these users. Continue?`)) {
+            setMassActionLoading(false);
+            return;
+          }
+        }
+        
         const batch = writeBatch(db);
 
+        // First remove user assignments
+        for (const user of users) {
+          if (user.selectedRoom && 
+              user.selectedRoom.dormId === dormId && 
+              roomsToDelete.includes(user.selectedRoom.id)) {
+            batch.update(doc(db, 'users', user.id), {
+              selectedRoom: null
+            });
+          }
+        }
+        
+        // Then delete rooms
         roomsToDelete.forEach(roomId => {
           const roomRef = doc(db, 'dorms', dormId, 'rooms', roomId);
           batch.delete(roomRef);
@@ -306,51 +449,13 @@ const HousingManagement = () => {
         delete updatedSelectedRooms[dormId];
         setSelectedRooms(updatedSelectedRooms);
 
-        await fetchDorms();
+        await fetchDormsAndUsers();
       } catch (err) {
         console.error('Error deleting rooms:', err);
         setError(`Error deleting rooms: ${err.message}`);
       } finally {
         setMassActionLoading(false);
       }
-    }
-  };
-
-  // Set availability for multiple rooms
-  const handleMassAvailability = async (dormId, makeAvailable) => {
-    if (!selectedRooms[dormId] || Object.keys(selectedRooms[dormId]).length === 0) {
-      setError(`No rooms selected to mark ${makeAvailable ? 'available' : 'unavailable'}`);
-      return;
-    }
-
-    const roomsToUpdate = Object.keys(selectedRooms[dormId]).filter(
-      roomId => selectedRooms[dormId][roomId]
-    );
-
-    if (roomsToUpdate.length === 0) {
-      setError(`No rooms selected to mark ${makeAvailable ? 'available' : 'unavailable'}`);
-      return;
-    }
-
-    try {
-      setMassActionLoading(true);
-      const batch = writeBatch(db);
-
-      roomsToUpdate.forEach(roomId => {
-        const roomRef = doc(db, 'dorms', dormId, 'rooms', roomId);
-        batch.update(roomRef, {
-          isAvailable: makeAvailable,
-          updatedAt: serverTimestamp()
-        });
-      });
-
-      await batch.commit();
-      await fetchDorms();
-    } catch (err) {
-      console.error('Error updating rooms:', err);
-      setError(`Error updating rooms: ${err.message}`);
-    } finally {
-      setMassActionLoading(false);
     }
   };
 
@@ -400,6 +505,42 @@ const HousingManagement = () => {
     if (!selectedRooms[dormId]) return 0;
 
     return Object.values(selectedRooms[dormId]).filter(Boolean).length;
+  };
+  
+  // Get user details by ID
+  const getUserById = (userId) => {
+    const user = users.find(user => user.id === userId);
+    
+    if (user) {
+      return {
+        id: user.id,
+        name: user.name || user.email || (user.firstName && user.lastName ? 
+              `${user.firstName} ${user.lastName}` : 
+              (user.firstName || user.lastName || user.displayName || 'User')),
+        email: user.email
+      };
+    }
+    
+    // Try to fetch the user if not in our local cache
+    // This is a placeholder for the actual implementation
+    return { 
+      id: userId, 
+      name: `User ${userId.substring(0, 5)}...`, // Truncate ID for display
+      unknown: true 
+    };
+  };
+
+  // Get occupant details for a room
+  const getOccupantDetails = (occupantIds) => {
+    if (!occupantIds || occupantIds.length === 0) return [];
+    
+    return occupantIds.map(id => {
+      const user = getUserById(id);
+      return {
+        id: user.id,
+        name: user.name || user.email || id
+      };
+    });
   };
 
   if (loading) {
@@ -544,18 +685,22 @@ const HousingManagement = () => {
                 />
               </div>
 
-              <div className="mb-4 flex items-center">
-                <label className="flex items-center text-gray-700 ml-6">
-                  <input
-                    id="isAvailable"
-                    name="isAvailable"
-                    type="checkbox"
-                    checked={formData.isAvailable}
-                    onChange={handleRoomInputChange}
-                    className="mr-2 h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-                  />
-                  Available
+              <div className="mb-4">
+                <label htmlFor="type" className="block text-gray-700 font-medium mb-2">
+                  Room Type
                 </label>
+                <select
+                  id="type"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleRoomInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  <option value="standard">Standard</option>
+                  <option value="suite">Suite</option>
+                  <option value="double">Double</option>
+                  <option value="single">Single</option>
+                </select>
               </div>
             </div>
 
@@ -693,38 +838,16 @@ const HousingManagement = () => {
                           {getSelectedRoomCount(dorm.id)} selected
                         </span>
                       )}
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleMassAvailability(dorm.id, true)}
-                          disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            }`}
-                        >
-                          Mark Available
-                        </button>
-                        <button
-                          onClick={() => handleMassAvailability(dorm.id, false)}
-                          disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                            }`}
-                        >
-                          Mark Unavailable
-                        </button>
-                        <button
-                          onClick={() => handleMassDeleteRooms(dorm.id)}
-                          disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            }`}
-                        >
-                          Delete Selected
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleMassDeleteRooms(dorm.id)}
+                        disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
+                        className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                      >
+                        Delete Selected
+                      </button>
                     </div>
                   )}
                 </div>
@@ -750,7 +873,7 @@ const HousingManagement = () => {
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Floor</th>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occupants</th>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
@@ -776,29 +899,38 @@ const HousingManagement = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm text-gray-500">
-                                {room.isSuite ? 'Suite' : 'Standard'}
+                                {room.type?.charAt(0).toUpperCase() + room.type?.slice(1) || 'Standard'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${room.isAvailable
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                                }`}>
-                                {room.isAvailable ? 'Available' : 'Not Available'}
-                              </span>
+                            <td className="px-6 py-4">
+                              {room.occupants && room.occupants.length > 0 ? (
+                                <div className="space-y-1">
+                                  {getOccupantDetails(room.occupants).map(occupant => (
+                                    <div key={occupant.id} className="flex items-center">
+                                      <span className={`text-sm ${occupant.unknown ? 'text-orange-500' : 'text-gray-700'} mr-2`}>
+                                        {occupant.name}
+                                        {occupant.email && ` (${occupant.email})`}
+                                      </span>
+                                      <button
+                                        onClick={() => handleRemoveUserFromRoom(occupant.id, dorm.id, room.id)}
+                                        className="text-xs py-1 px-2 bg-red-100 text-red-700 hover:bg-red-200 rounded"
+                                        title="Remove user from room"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-500">No occupants</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button
-                                onClick={() => toggleRoomAvailability(dorm.id, room.id, room.isAvailable)}
-                                className="text-yellow-600 hover:text-yellow-900 mr-3"
-                              >
-                                {room.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
-                              </button>
                               <button
                                 onClick={() => handleDeleteRoom(dorm.id, room.id)}
                                 className="text-red-600 hover:text-red-900"
                               >
-                                Delete
+                                Delete Room
                               </button>
                             </td>
                           </tr>

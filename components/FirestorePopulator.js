@@ -20,7 +20,7 @@ const FirestorePopulator = () => {
           features: ['Air conditioning', 'Elevator', 'Study lounges', 'Laundry facilities'],
           image: '/images/magnolia.jpg',
           totalRooms: 175,
-          availableRooms: 87,
+          availableRooms: 175, // All rooms available
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         },
@@ -31,7 +31,7 @@ const FirestorePopulator = () => {
           features: ['Community bathrooms', 'Lounge spaces', 'Kitchen on each floor'],
           image: '/images/taylor.jpg',
           totalRooms: 120,
-          availableRooms: 52,
+          availableRooms: 120, // All rooms available
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         },
@@ -42,7 +42,7 @@ const FirestorePopulator = () => {
           features: ['Full kitchens', 'Private bathrooms', 'Living room in each unit'],
           image: '/images/collins.jpg',
           totalRooms: 90,
-          availableRooms: 41,
+          availableRooms: 90, // All rooms available
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         },
@@ -53,7 +53,7 @@ const FirestorePopulator = () => {
           features: ['Community bathrooms', 'Historic architecture', 'Close to campus dining'],
           image: '/images/bostwick.jpg',
           totalRooms: 110,
-          availableRooms: 65,
+          availableRooms: 110, // All rooms available
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString()
         }
@@ -95,13 +95,13 @@ const FirestorePopulator = () => {
       { id: '102B', roomNumber: '102B', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '102C', roomNumber: '102C', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '102D', roomNumber: '102D', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '113A', roomNumber: '113A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'unavailable', occupants: ['mockuser1', 'mockuser2'], createdAt: new Date().toISOString() },
+      { id: '113A', roomNumber: '113A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '113B', roomNumber: '113B', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       
       // Second Floor
       { id: '201A', roomNumber: '201A', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '201B', roomNumber: '201B', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '201C', roomNumber: '201C', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'unavailable', occupants: ['mockuser3'], createdAt: new Date().toISOString() },
+      { id: '201C', roomNumber: '201C', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '202A', roomNumber: '202A', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '202B', roomNumber: '202B', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       
@@ -113,7 +113,7 @@ const FirestorePopulator = () => {
       
       // Fourth Floor
       { id: '401A', roomNumber: '401A', floor: '4', type: 'double', capacity: 2, price: 4800, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '401B', roomNumber: '401B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'unavailable', occupants: ['mockuser4'], createdAt: new Date().toISOString() },
+      { id: '401B', roomNumber: '401B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '402A', roomNumber: '402A', floor: '4', type: 'double', capacity: 2, price: 4800, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       { id: '402B', roomNumber: '402B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() }
     ];
@@ -165,15 +165,6 @@ const FirestorePopulator = () => {
               createdAt: new Date().toISOString()
             });
           }
-        }
-        
-        // Mark a few rooms as unavailable for realism
-        if (rooms.length > 5) {
-          rooms[3].occupancyStatus = 'unavailable';
-          rooms[3].occupants = [`mockuser_${dormId}_1`];
-          
-          rooms[12].occupancyStatus = 'unavailable';
-          rooms[12].occupants = [`mockuser_${dormId}_2`, `mockuser_${dormId}_3`];
         }
         
         // Use a batch for efficient writes
@@ -360,7 +351,7 @@ const FirestorePopulator = () => {
           >
             Populate Dorms & Rooms
           </button>
-          <p className="mt-2 text-sm text-gray-600">Creates dorm buildings and adds room data for each dorm.</p>
+          <p className="mt-2 text-sm text-gray-600">Creates dorm buildings and adds fully available room data with no occupants.</p>
         </div>
         
         <div className="mb-6">
@@ -371,7 +362,7 @@ const FirestorePopulator = () => {
           >
             Populate User Data
           </button>
-          <p className="mt-2 text-sm text-gray-600">Creates sample user accounts with roommate preferences.</p>
+          <p className="mt-2 text-sm text-gray-600">Creates sample user accounts with roommate preferences (not assigned to any rooms).</p>
         </div>
         
         <div className="mb-6">
@@ -398,7 +389,7 @@ const FirestorePopulator = () => {
           >
             Populate All Data
           </button>
-          <p className="mt-2 text-sm text-gray-600">Runs all population functions in sequence.</p>
+          <p className="mt-2 text-sm text-gray-600">Runs all population functions in sequence. All rooms will be created as fully available with no occupants.</p>
         </div>
       </div>
       
