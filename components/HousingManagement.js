@@ -1,27 +1,15 @@
-// Start adding room to a specific dorm
-const startAddingRoom = (dorm) => {
-    setCurrentDorm(dorm);
-    setIsAddingRoom(true);
-    setFormData({
-      ...formData,
-      roomNumber: '',
-      capacity: 1,
-      floor: 1,
-      isSuite: false,
-      isAvailable: true
-    });
-  };import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  serverTimestamp, 
-  query, 
+import { useState, useEffect } from 'react';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  query,
   orderBy,
-  writeBatch 
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -30,9 +18,10 @@ const HousingManagement = () => {
   const [dorms, setDorms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // States for adding/editing dorms
   const [isAddingDorm, setIsAddingDorm] = useState(false);
+  const [editingDormId, setEditingDormId] = useState(null); // Track which dorm is being edited by ID
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [currentDorm, setCurrentDorm] = useState(null);
   const [selectedRooms, setSelectedRooms] = useState({});
@@ -46,47 +35,72 @@ const HousingManagement = () => {
     isSuite: false,
     isAvailable: true
   });
-  
+
   // Fetch dorms on component mount
   useEffect(() => {
     fetchDorms();
     // Initialize empty selected rooms object
     setSelectedRooms({});
   }, []);
-  
+
+  // Start editing a dorm
+  const startEditingDorm = (dorm) => {
+    setCurrentDorm(dorm);
+    setEditingDormId(dorm.id); // Set the ID of the dorm being edited
+    setFormData({
+      ...formData,
+      dormName: dorm.name,
+      description: dorm.description || ''
+    });
+  };
+
+  // Start adding room to a specific dorm
+  const startAddingRoom = (dorm) => {
+    setCurrentDorm(dorm);
+    setIsAddingRoom(true);
+    setFormData({
+      ...formData,
+      roomNumber: '',
+      capacity: 1,
+      floor: 1,
+      isSuite: false,
+      isAvailable: true
+    });
+  };
+
   // Function to fetch all dorms
   const fetchDorms = async () => {
     try {
       setLoading(true);
       const dormQuery = query(collection(db, 'dorms'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(dormQuery);
-      
+
       // Process dorms
       const dormsList = [];
-      
+
       for (const dormDoc of querySnapshot.docs) {
         const dormData = {
           id: dormDoc.id,
           ...dormDoc.data(),
           rooms: []
         };
-        
+
         // Fetch rooms for this dorm
         const roomsQuery = query(
           collection(db, 'dorms', dormDoc.id, 'rooms'),
           orderBy('roomNumber')
         );
         const roomsSnapshot = await getDocs(roomsQuery);
-        
+
         // Add rooms to dorm
         dormData.rooms = roomsSnapshot.docs.map(roomDoc => ({
           id: roomDoc.id,
           ...roomDoc.data()
         }));
-        
+
         dormsList.push(dormData);
       }
-      
+
       setDorms(dormsList);
     } catch (err) {
       console.error('Error fetching dorms:', err);
@@ -95,7 +109,7 @@ const HousingManagement = () => {
       setLoading(false);
     }
   };
-  
+
   // Handle dorm form input changes
   const handleDormInputChange = (e) => {
     const { name, value } = e.target;
@@ -104,7 +118,7 @@ const HousingManagement = () => {
       [name]: value
     }));
   };
-  
+
   // Handle room form input changes
   const handleRoomInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -113,16 +127,16 @@ const HousingManagement = () => {
       [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value, 10) : value
     }));
   };
-  
+
   // Add a new dorm
   const handleAddDorm = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (!formData.dormName.trim()) {
         throw new Error('Dorm name is required');
       }
-      
+
       // Add dorm to Firestore
       await addDoc(collection(db, 'dorms'), {
         name: formData.dormName.trim(),
@@ -130,7 +144,7 @@ const HousingManagement = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      
+
       // Reset form and refresh dorms
       setFormData({
         ...formData,
@@ -144,20 +158,55 @@ const HousingManagement = () => {
       setError(`Error adding dorm: ${err.message}`);
     }
   };
-  
+
+  // Update an existing dorm
+  const handleUpdateDorm = async (e, dormId) => {
+    e.preventDefault();
+
+    try {
+      if (!dormId) {
+        throw new Error('No dorm selected for editing');
+      }
+
+      if (!formData.dormName.trim()) {
+        throw new Error('Dorm name is required');
+      }
+
+      // Update dorm in Firestore
+      await updateDoc(doc(db, 'dorms', dormId), {
+        name: formData.dormName.trim(),
+        description: formData.description.trim(),
+        updatedAt: serverTimestamp()
+      });
+
+      // Reset form and refresh dorms
+      setFormData({
+        ...formData,
+        dormName: '',
+        description: ''
+      });
+      setEditingDormId(null); // Clear editing state
+      setCurrentDorm(null);
+      await fetchDorms();
+    } catch (err) {
+      console.error('Error updating dorm:', err);
+      setError(`Error updating dorm: ${err.message}`);
+    }
+  };
+
   // Add a new room to a dorm
   const handleAddRoom = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (!currentDorm) {
         throw new Error('No dorm selected');
       }
-      
+
       if (!formData.roomNumber.trim()) {
         throw new Error('Room number is required');
       }
-      
+
       // Add room to Firestore
       await addDoc(collection(db, 'dorms', currentDorm.id, 'rooms'), {
         roomNumber: formData.roomNumber.trim(),
@@ -169,7 +218,7 @@ const HousingManagement = () => {
         updatedAt: serverTimestamp(),
         occupants: []
       });
-      
+
       // Reset form and refresh dorms
       setFormData({
         ...formData,
@@ -183,7 +232,7 @@ const HousingManagement = () => {
       setError(`Error adding room: ${err.message}`);
     }
   };
-  
+
   // Delete a dorm
   const handleDeleteDorm = async (dormId) => {
     if (window.confirm('Are you sure you want to delete this dorm? This will also delete all rooms in this dorm.')) {
@@ -196,7 +245,7 @@ const HousingManagement = () => {
       }
     }
   };
-  
+
   // Delete a room
   const handleDeleteRoom = async (dormId, roomId) => {
     if (window.confirm('Are you sure you want to delete this room?')) {
@@ -209,7 +258,7 @@ const HousingManagement = () => {
       }
     }
   };
-  
+
   // Toggle room availability
   const toggleRoomAvailability = async (dormId, roomId, currentStatus) => {
     try {
@@ -223,7 +272,7 @@ const HousingManagement = () => {
       setError(`Error updating room: ${err.message}`);
     }
   };
-  
+
   // Delete multiple rooms
   const handleMassDeleteRooms = async (dormId) => {
     if (!selectedRooms[dormId] || Object.keys(selectedRooms[dormId]).length === 0) {
@@ -244,19 +293,19 @@ const HousingManagement = () => {
       try {
         setMassActionLoading(true);
         const batch = writeBatch(db);
-        
+
         roomsToDelete.forEach(roomId => {
           const roomRef = doc(db, 'dorms', dormId, 'rooms', roomId);
           batch.delete(roomRef);
         });
-        
+
         await batch.commit();
-        
+
         // Clear selections for this dorm
         const updatedSelectedRooms = { ...selectedRooms };
         delete updatedSelectedRooms[dormId];
         setSelectedRooms(updatedSelectedRooms);
-        
+
         await fetchDorms();
       } catch (err) {
         console.error('Error deleting rooms:', err);
@@ -286,15 +335,15 @@ const HousingManagement = () => {
     try {
       setMassActionLoading(true);
       const batch = writeBatch(db);
-      
+
       roomsToUpdate.forEach(roomId => {
         const roomRef = doc(db, 'dorms', dormId, 'rooms', roomId);
-        batch.update(roomRef, { 
+        batch.update(roomRef, {
           isAvailable: makeAvailable,
           updatedAt: serverTimestamp()
         });
       });
-      
+
       await batch.commit();
       await fetchDorms();
     } catch (err) {
@@ -309,15 +358,15 @@ const HousingManagement = () => {
   const handleRoomSelection = (dormId, roomId, isChecked) => {
     setSelectedRooms(prev => {
       const newSelectedRooms = { ...prev };
-      
+
       // Initialize dorm's selected rooms if not yet exist
       if (!newSelectedRooms[dormId]) {
         newSelectedRooms[dormId] = {};
       }
-      
+
       // Set the room's selected state
       newSelectedRooms[dormId][roomId] = isChecked;
-      
+
       return newSelectedRooms;
     });
   };
@@ -326,15 +375,15 @@ const HousingManagement = () => {
   const handleSelectAllRooms = (dormId, rooms, isChecked) => {
     setSelectedRooms(prev => {
       const newSelectedRooms = { ...prev };
-      
+
       // Initialize dorm's selected rooms
       newSelectedRooms[dormId] = {};
-      
+
       // Set all rooms' selected state
       rooms.forEach(room => {
         newSelectedRooms[dormId][room.id] = isChecked;
       });
-      
+
       return newSelectedRooms;
     });
   };
@@ -342,17 +391,17 @@ const HousingManagement = () => {
   // Check if all rooms in a dorm are selected
   const areAllRoomsSelected = (dormId, rooms) => {
     if (!selectedRooms[dormId] || rooms.length === 0) return false;
-    
+
     return rooms.every(room => selectedRooms[dormId][room.id]);
   };
 
   // Get count of selected rooms in a dorm
   const getSelectedRoomCount = (dormId) => {
     if (!selectedRooms[dormId]) return 0;
-    
+
     return Object.values(selectedRooms[dormId]).filter(Boolean).length;
   };
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -361,7 +410,7 @@ const HousingManagement = () => {
       </div>
     );
   }
-  
+
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
@@ -373,11 +422,11 @@ const HousingManagement = () => {
           Add New Dorm
         </button>
       </div>
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-md mb-6">
           {error}
-          <button 
+          <button
             className="ml-2 text-red-600 font-medium hover:text-red-800"
             onClick={() => setError(null)}
           >
@@ -385,7 +434,7 @@ const HousingManagement = () => {
           </button>
         </div>
       )}
-      
+
       {/* Add Dorm Form */}
       {isAddingDorm && (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
@@ -406,7 +455,7 @@ const HousingManagement = () => {
                 required
               />
             </div>
-            
+
             <div className="mb-4">
               <label htmlFor="description" className="block text-gray-700 font-medium mb-2">
                 Description
@@ -420,7 +469,7 @@ const HousingManagement = () => {
                 placeholder="Enter dorm description (optional)"
               />
             </div>
-            
+
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
@@ -439,7 +488,7 @@ const HousingManagement = () => {
           </form>
         </div>
       )}
-      
+
       {/* Add Room Form */}
       {isAddingRoom && currentDorm && (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
@@ -463,7 +512,7 @@ const HousingManagement = () => {
                   required
                 />
               </div>
-              
+
               <div className="mb-4">
                 <label htmlFor="floor" className="block text-gray-700 font-medium mb-2">
                   Floor
@@ -478,7 +527,7 @@ const HousingManagement = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
-              
+
               <div className="mb-4">
                 <label htmlFor="capacity" className="block text-gray-700 font-medium mb-2">
                   Capacity
@@ -494,7 +543,7 @@ const HousingManagement = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
-              
+
               <div className="mb-4 flex items-center">
                 <label className="flex items-center text-gray-700">
                   <input
@@ -507,7 +556,7 @@ const HousingManagement = () => {
                   />
                   Is Suite
                 </label>
-                
+
                 <label className="flex items-center text-gray-700 ml-6">
                   <input
                     id="isAvailable"
@@ -521,7 +570,7 @@ const HousingManagement = () => {
                 </label>
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 type="button"
@@ -543,7 +592,7 @@ const HousingManagement = () => {
           </form>
         </div>
       )}
-      
+
       {/* Dorms and Rooms List */}
       {dorms.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 text-center">
@@ -552,8 +601,8 @@ const HousingManagement = () => {
       ) : (
         <div className="space-y-6">
           {dorms.map(dorm => (
-            <div 
-              key={dorm.id} 
+            <div
+              key={dorm.id}
               className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden"
             >
               <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
@@ -564,6 +613,12 @@ const HousingManagement = () => {
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => startEditingDorm(dorm)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded transition duration-200"
+                  >
+                    Edit Dorm
+                  </button>
                   <button
                     onClick={() => startAddingRoom(dorm)}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium py-1 px-3 rounded transition duration-200"
@@ -578,12 +633,71 @@ const HousingManagement = () => {
                   </button>
                 </div>
               </div>
-              
+
+              {/* Inline Edit Dorm Form - Only shows for the currently edited dorm */}
+              {editingDormId === dorm.id && (
+                <div className="p-4 bg-yellow-50 border-b border-gray-200">
+                  <h4 className="text-lg font-bold mb-4 text-gray-900">
+                    Edit Dorm: {dorm.name}
+                  </h4>
+                  <form onSubmit={(e) => handleUpdateDorm(e, dorm.id)}>
+                    <div className="mb-4">
+                      <label htmlFor={`dormName-${dorm.id}`} className="block text-gray-700 font-medium mb-2">
+                        Dorm Name*
+                      </label>
+                      <input
+                        id={`dormName-${dorm.id}`}
+                        name="dormName"
+                        type="text"
+                        value={formData.dormName}
+                        onChange={handleDormInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Enter dorm name"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor={`description-${dorm.id}`} className="block text-gray-700 font-medium mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        id={`description-${dorm.id}`}
+                        name="description"
+                        value={formData.description}
+                        onChange={handleDormInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 h-24"
+                        placeholder="Enter dorm description (optional)"
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingDormId(null);
+                          setCurrentDorm(null);
+                        }}
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition duration-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded transition duration-200"
+                      >
+                        Update Dorm
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {/* Rooms */}
               <div className="p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h5 className="font-medium text-gray-700">Rooms ({dorm.rooms.length})</h5>
-                  
+
                   {dorm.rooms.length > 0 && (
                     <div className="flex items-center space-x-2">
                       {getSelectedRoomCount(dorm.id) > 0 && (
@@ -595,33 +709,30 @@ const HousingManagement = () => {
                         <button
                           onClick={() => handleMassAvailability(dorm.id, true)}
                           disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${
-                            getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-green-100 text-green-800 hover:bg-green-200'
-                          }`}
+                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            }`}
                         >
                           Mark Available
                         </button>
                         <button
                           onClick={() => handleMassAvailability(dorm.id, false)}
                           disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${
-                            getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          }`}
+                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            }`}
                         >
                           Mark Unavailable
                         </button>
                         <button
                           onClick={() => handleMassDeleteRooms(dorm.id)}
                           disabled={getSelectedRoomCount(dorm.id) === 0 || massActionLoading}
-                          className={`text-xs py-1 px-2 rounded ${
-                            getSelectedRoomCount(dorm.id) === 0 || massActionLoading
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
+                          className={`text-xs py-1 px-2 rounded ${getSelectedRoomCount(dorm.id) === 0 || massActionLoading
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            }`}
                         >
                           Delete Selected
                         </button>
@@ -629,7 +740,7 @@ const HousingManagement = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {dorm.rooms.length === 0 ? (
                   <p className="text-gray-500 text-sm">No rooms have been added to this dorm yet.</p>
                 ) : (
@@ -681,11 +792,10 @@ const HousingManagement = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                room.isAvailable 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${room.isAvailable
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}>
                                 {room.isAvailable ? 'Available' : 'Not Available'}
                               </span>
                             </td>
