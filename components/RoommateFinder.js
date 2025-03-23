@@ -594,6 +594,9 @@ const RoommateFinder = () => {
             setErrorMessage("");
             setSuccessMessage("You have successfully left all roommate connections.");
 
+            // Close the confirmation modal BEFORE the page refresh
+            setLeaveConfirmModal(false);
+
             // Force reload to ensure fresh data is displayed
             setTimeout(() => {
                 window.location.reload();
@@ -602,6 +605,8 @@ const RoommateFinder = () => {
         } catch (error) {
             console.error('Error leaving roommates:', error);
             setErrorMessage('Error leaving roommates: ' + error.message);
+            // Make sure to close modal even if there's an error
+            setLeaveConfirmModal(false);
         } finally {
             setLoading(false);
         }
@@ -862,14 +867,19 @@ const RoommateFinder = () => {
                             </h2>
                             <button
                                 onClick={openLeaveConfirmation}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 py-1 px-3 rounded text-sm font-medium transition duration-200 flex items-center border border-red-200"
+                                className={`py-1 px-3 rounded text-sm font-medium transition duration-200 flex items-center ${user?.selectedRoom
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                                        : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                                    }`}
                                 disabled={user?.selectedRoom}
+                                title={user?.selectedRoom ? "You cannot leave roommates while you have a room selected" : "Leave all roommate connections"}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
                                 Leave Roommates
                             </button>
+
                         </div>
                         <div className="space-y-4">
                             {activeRoommates.map(roommate => {
@@ -929,7 +939,7 @@ const RoommateFinder = () => {
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                                     </svg>
-                                                    <span className="font-semibold">Room:</span> {roommate.selectedRoom.roomNumber} in {roommate.selectedRoom.dormName}
+                                                    <span className="font-semibold mr-0.5">Room:</span> {roommate.selectedRoom.roomNumber} in {roommate.selectedRoom.dormName}
                                                 </p>
                                             </div>
                                         )}
