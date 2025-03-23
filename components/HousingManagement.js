@@ -11,8 +11,10 @@ import {
     orderBy,
     writeBatch,
     where,
+    setDoc,
     getDoc,
-    onSnapshot
+    onSnapshot,
+    increment
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -186,7 +188,9 @@ const HousingManagement = () => {
                 name: formData.dormName.trim(),
                 description: formData.description.trim(),
                 createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                availableRooms: 0,
+                totalRooms: 0
             });
 
             // Reset form and refresh dorms
@@ -251,8 +255,16 @@ const HousingManagement = () => {
                 throw new Error('Room number is required');
             }
 
+            const roomId = crypto.randomUUID(); // Or use a library like nanoid or uuid
+
+            await updateDoc(doc(db, 'dorms', currentDorm.id), {
+
+                totalRooms: increment(1),
+                availableRooms: increment(1)
+            });
+
             // Add room to Firestore
-            await addDoc(collection(db, 'dorms', currentDorm.id, 'rooms'), {
+            await setDoc(doc(db, 'dorms', currentDorm.id, 'rooms', roomId), {
                 roomNumber: formData.roomNumber.trim(),
                 capacity: formData.capacity,
                 floor: formData.floor,
@@ -261,7 +273,7 @@ const HousingManagement = () => {
                 updatedAt: serverTimestamp(),
                 occupants: [],
                 occupancyStatus: "available",
-                id: currentDorm.id,
+                id: roomId
             });
 
             // Reset form and refresh dorms
@@ -349,6 +361,13 @@ const HousingManagement = () => {
 
                 // Now delete the room
                 await deleteDoc(doc(db, 'dorms', dormId, 'rooms', roomId));
+
+                // Decrement the totalRooms counter in the dorm document
+                await updateDoc(doc(db, 'dorms', dormId), {
+                    totalRooms: increment(-1),
+                    availableRooms: increment(-1)
+                });
+
                 await fetchDormsAndUsers();
             } catch (err) {
                 console.error('Error deleting room:', err);
