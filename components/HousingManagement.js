@@ -953,11 +953,6 @@ const HousingManagement = () => {
                                                         <td className="px-6 py-4">
                                                             {room.occupants && room.occupants.length > 0 ? (
                                                                 <div>
-                                                                    <div className="mb-1">
-                                                                        <span className="text-sm text-gray-700">
-                                                                            {room.occupants.length} {room.occupants.length === 1 ? 'occupant' : 'occupants'}
-                                                                        </span>
-                                                                    </div>
                                                                     <div className="space-y-1">
                                                                         {getOccupantDetails(room.occupants).map(occupant => (
                                                                             <div key={occupant.id}>
