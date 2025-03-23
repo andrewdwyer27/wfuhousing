@@ -335,9 +335,20 @@ const RoommateFinder = () => {
     };
 
     // Accept roommate request
-    // This function uses a fully synchronous approach to handle roommate connections
     const acceptRequest = async (requestor) => {
         if (!user) return;
+
+        // Check if either user has a room selected
+        if (user.selectedRoom) {
+            setErrorMessage("You cannot accept a roommate request while you have a room selected. Please cancel your room selection first.");
+            return;
+        }
+
+        // Check if the requestor has a room selected
+        if (requestor.selectedRoom) {
+            setErrorMessage("You cannot accept this request because the requestor already has a room selected.");
+            return;
+        }
 
         try {
             console.log("Starting roommate acceptance with full transitivity...");
@@ -390,6 +401,14 @@ const RoommateFinder = () => {
                     });
                 } else {
                     console.warn(`User document ${uid} not found, skipping`);
+                }
+            }
+
+            // Check if any user in the network has a room selected
+            for (const userDoc of userDocs) {
+                if (userDoc.data.selectedRoom) {
+                    setErrorMessage(`Cannot accept request: ${userDoc.data.firstName} ${userDoc.data.lastName} already has a room selected.`);
+                    return;
                 }
             }
 
@@ -868,8 +887,8 @@ const RoommateFinder = () => {
                             <button
                                 onClick={openLeaveConfirmation}
                                 className={`py-1 px-3 rounded text-sm font-medium transition duration-200 flex items-center ${user?.selectedRoom
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
-                                        : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                                    : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
                                     }`}
                                 disabled={user?.selectedRoom}
                                 title={user?.selectedRoom ? "You cannot leave roommates while you have a room selected" : "Leave all roommate connections"}
