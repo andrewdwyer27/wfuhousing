@@ -333,7 +333,6 @@ const RoomSelection = () => {
                 dormId: dormId,
                 dormName: dorm.name,
                 type: selectedRoom.type,
-                price: selectedRoom.price,
                 selectedAt: new Date().toISOString(),
                 selectedBy: user.uid
             };

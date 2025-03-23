@@ -259,7 +259,9 @@ const HousingManagement = () => {
                 type: formData.type,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                occupants: []
+                occupants: [],
+                occupancyStatus: "available",
+                id: currentDorm.id,
             });
 
             // Reset form and refresh dorms
@@ -679,102 +681,6 @@ const HousingManagement = () => {
                 </div>
             )}
 
-            {/* Add Room Form */}
-            {isAddingRoom && currentDorm && (
-                <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-                    <h4 className="text-lg font-bold mb-4 text-gray-900">
-                        Add Room to {currentDorm.name}
-                    </h4>
-                    <form onSubmit={handleAddRoom}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="mb-4">
-                                <label htmlFor="roomNumber" className="block text-gray-700 font-medium mb-2">
-                                    Room Number*
-                                </label>
-                                <input
-                                    id="roomNumber"
-                                    name="roomNumber"
-                                    type="text"
-                                    value={formData.roomNumber}
-                                    onChange={handleRoomInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                    placeholder="e.g. 101A"
-                                    required
-                                />
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="floor" className="block text-gray-700 font-medium mb-2">
-                                    Floor
-                                </label>
-                                <input
-                                    id="floor"
-                                    name="floor"
-                                    type="number"
-                                    min="1"
-                                    value={formData.floor}
-                                    onChange={handleRoomInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                />
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="capacity" className="block text-gray-700 font-medium mb-2">
-                                    Capacity
-                                </label>
-                                <input
-                                    id="capacity"
-                                    name="capacity"
-                                    type="number"
-                                    min="1"
-                                    max="8"
-                                    value={formData.capacity}
-                                    onChange={handleRoomInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                />
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="type" className="block text-gray-700 font-medium mb-2">
-                                    Room Type
-                                </label>
-                                <select
-                                    id="type"
-                                    name="type"
-                                    value={formData.type}
-                                    onChange={handleRoomInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                >
-                                    <option value="standard">Standard</option>
-                                    <option value="suite">Suite</option>
-                                    <option value="double">Double</option>
-                                    <option value="single">Single</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end space-x-3 mt-4">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsAddingRoom(false);
-                                    setCurrentDorm(null);
-                                }}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition duration-200"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded transition duration-200"
-                            >
-                                Add Room
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
             {/* Dorms and Rooms List */}
             {dorms.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 text-center">
@@ -868,6 +774,102 @@ const HousingManagement = () => {
                                                 className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded transition duration-200"
                                             >
                                                 Update Dorm
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+
+                            {/* Add Room Form - Only shows for the currently selected dorm */}
+                            {isAddingRoom && currentDorm && currentDorm.id === dorm.id && (
+                                <div className="p-4 bg-green-50 border-b border-gray-200">
+                                    <h4 className="text-lg font-bold mb-4 text-gray-900">
+                                        Add Room to {dorm.name}
+                                    </h4>
+                                    <form onSubmit={handleAddRoom}>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="mb-4">
+                                                <label htmlFor="roomNumber" className="block text-gray-700 font-medium mb-2">
+                                                    Room Number*
+                                                </label>
+                                                <input
+                                                    id="roomNumber"
+                                                    name="roomNumber"
+                                                    type="text"
+                                                    value={formData.roomNumber}
+                                                    onChange={handleRoomInputChange}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                    placeholder="e.g. 101A"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <label htmlFor="floor" className="block text-gray-700 font-medium mb-2">
+                                                    Floor
+                                                </label>
+                                                <input
+                                                    id="floor"
+                                                    name="floor"
+                                                    type="number"
+                                                    min="1"
+                                                    value={formData.floor}
+                                                    onChange={handleRoomInputChange}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                />
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <label htmlFor="capacity" className="block text-gray-700 font-medium mb-2">
+                                                    Capacity
+                                                </label>
+                                                <input
+                                                    id="capacity"
+                                                    name="capacity"
+                                                    type="number"
+                                                    min="1"
+                                                    max="8"
+                                                    value={formData.capacity}
+                                                    onChange={handleRoomInputChange}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                />
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <label htmlFor="type" className="block text-gray-700 font-medium mb-2">
+                                                    Room Type
+                                                </label>
+                                                <select
+                                                    id="type"
+                                                    name="type"
+                                                    value={formData.type}
+                                                    onChange={handleRoomInputChange}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                >
+                                                    <option value="standard">Standard</option>
+                                                    <option value="suite">Suite</option>
+                                                    <option value="double">Double</option>
+                                                    <option value="single">Single</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end space-x-3 mt-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsAddingRoom(false);
+                                                    setCurrentDorm(null);
+                                                }}
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition duration-200"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded transition duration-200"
+                                            >
+                                                Add Room
                                             </button>
                                         </div>
                                     </form>

@@ -91,31 +91,31 @@ const FirestorePopulator = () => {
     // Create rooms data for Magnolia
     const magnoliaRooms = [
       // First Floor
-      { id: '102A', roomNumber: '102A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '102B', roomNumber: '102B', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '102C', roomNumber: '102C', floor: '1', type: 'single', capacity: 1, price: 5000, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '102D', roomNumber: '102D', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '113A', roomNumber: '113A', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '113B', roomNumber: '113B', floor: '1', type: 'double', capacity: 2, price: 4500, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '102A', roomNumber: '102A', floor: '1', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '102B', roomNumber: '102B', floor: '1', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '102C', roomNumber: '102C', floor: '1', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '102D', roomNumber: '102D', floor: '1', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '113A', roomNumber: '113A', floor: '1', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '113B', roomNumber: '113B', floor: '1', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       
       // Second Floor
-      { id: '201A', roomNumber: '201A', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '201B', roomNumber: '201B', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '201C', roomNumber: '201C', floor: '2', type: 'single', capacity: 1, price: 5100, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '202A', roomNumber: '202A', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '202B', roomNumber: '202B', floor: '2', type: 'double', capacity: 2, price: 4600, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '201A', roomNumber: '201A', floor: '2', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '201B', roomNumber: '201B', floor: '2', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '201C', roomNumber: '201C', floor: '2', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '202A', roomNumber: '202A', floor: '2', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '202B', roomNumber: '202B', floor: '2', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       
       // Third Floor
-      { id: '301A', roomNumber: '301A', floor: '3', type: 'double', capacity: 2, price: 4700, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '301B', roomNumber: '301B', floor: '3', type: 'single', capacity: 1, price: 5200, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '302A', roomNumber: '302A', floor: '3', type: 'double', capacity: 2, price: 4700, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '302B', roomNumber: '302B', floor: '3', type: 'single', capacity: 1, price: 5200, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '301A', roomNumber: '301A', floor: '3', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '301B', roomNumber: '301B', floor: '3', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '302A', roomNumber: '302A', floor: '3', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '302B', roomNumber: '302B', floor: '3', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
       
       // Fourth Floor
-      { id: '401A', roomNumber: '401A', floor: '4', type: 'double', capacity: 2, price: 4800, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '401B', roomNumber: '401B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '402A', roomNumber: '402A', floor: '4', type: 'double', capacity: 2, price: 4800, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
-      { id: '402B', roomNumber: '402B', floor: '4', type: 'single', capacity: 1, price: 5300, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() }
+      { id: '401A', roomNumber: '401A', floor: '4', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '401B', roomNumber: '401B', floor: '4', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '402A', roomNumber: '402A', floor: '4', type: 'double', capacity: 2, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() },
+      { id: '402B', roomNumber: '402B', floor: '4', type: 'single', capacity: 1, occupancyStatus: 'available', occupants: [], createdAt: new Date().toISOString() }
     ];
     
     try {
@@ -149,9 +149,6 @@ const FirestorePopulator = () => {
             const roomId = `${floor}${roomNum.toString().padStart(2, '0')}`;
             const roomType = roomNum % 3 === 0 ? 'single' : 'double';
             const capacity = roomType === 'single' ? 1 : 2;
-            const basePrice = roomType === 'single' ? 5000 : 4500;
-            // Higher floors cost more
-            const price = basePrice + ((floor - 1) * 100);
             
             rooms.push({
               id: roomId,
@@ -159,7 +156,6 @@ const FirestorePopulator = () => {
               floor: floor.toString(),
               type: roomType,
               capacity: capacity,
-              price: price,
               occupancyStatus: 'available',
               occupants: [],
               createdAt: new Date().toISOString()
