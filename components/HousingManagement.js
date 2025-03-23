@@ -545,18 +545,6 @@ const HousingManagement = () => {
               </div>
 
               <div className="mb-4 flex items-center">
-                <label className="flex items-center text-gray-700">
-                  <input
-                    id="isSuite"
-                    name="isSuite"
-                    type="checkbox"
-                    checked={formData.isSuite}
-                    onChange={handleRoomInputChange}
-                    className="mr-2 h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-                  />
-                  Is Suite
-                </label>
-
                 <label className="flex items-center text-gray-700 ml-6">
                   <input
                     id="isAvailable"
