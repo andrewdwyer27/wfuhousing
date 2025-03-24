@@ -39,6 +39,8 @@ const RoommateFinder = () => {
     });
     const [leaveConfirmModal, setLeaveConfirmModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [showMatchDetailsModal, setShowMatchDetailsModal] = useState(false);
+    const [selectedRoommateMatch, setSelectedRoommateMatch] = useState(null);
     const router = useRouter();
 
     const interestOptions = [
@@ -229,41 +231,79 @@ const RoommateFinder = () => {
         setFilteredRoommates(result);
     }, [potentialRoommates, filterOptions]);
 
-    // Add this new function after the clearFilters function
-    // Calculate similarity score between user and potential roommate
     const calculateSimilarityScore = (userPrefs, roommatePrefs, userYear, roommateYear) => {
         let score = 0;
         let maxScore = 0;
+        let breakdown = {};
 
         // Check study habits
         if (userPrefs.studyHabits && roommatePrefs.studyHabits) {
-            maxScore += 20;
+            const categoryMaxScore = 20;
+            maxScore += categoryMaxScore;
+            let categoryScore = 0;
+            let categoryNote = "";
+
             if (userPrefs.studyHabits === roommatePrefs.studyHabits) {
-                score += 20;
+                categoryScore = 20;
+                categoryNote = "Exact match";
             } else if (
                 (userPrefs.studyHabits === "I can study anywhere" ||
                     roommatePrefs.studyHabits === "I can study anywhere")
             ) {
-                score += 10; // Partial match for flexible study habits
+                categoryScore = 10;
+                categoryNote = "Partial match - one person is flexible";
+            } else {
+                categoryNote = "Different preferences";
             }
+
+            score += categoryScore;
+            breakdown.studyHabits = {
+                yourPref: userPrefs.studyHabits,
+                theirPref: roommatePrefs.studyHabits,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Check sleep schedule
         if (userPrefs.sleepSchedule && roommatePrefs.sleepSchedule) {
-            maxScore += 20;
+            const categoryMaxScore = 20;
+            maxScore += categoryMaxScore;
+            let categoryScore = 0;
+            let categoryNote = "";
+
             if (userPrefs.sleepSchedule === roommatePrefs.sleepSchedule) {
-                score += 20;
+                categoryScore = 20;
+                categoryNote = "Exact match";
             } else if (userPrefs.sleepSchedule === "Varies day to day" ||
                 roommatePrefs.sleepSchedule === "Varies day to day") {
-                score += 5; // Small bonus for flexibility
+                categoryScore = 5;
+                categoryNote = "Partial match - one person has variable schedule";
+            } else {
+                categoryNote = "Different sleep schedules";
             }
+
+            score += categoryScore;
+            breakdown.sleepSchedule = {
+                yourPref: userPrefs.sleepSchedule,
+                theirPref: roommatePrefs.sleepSchedule,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Check cleanliness
         if (userPrefs.cleanliness && roommatePrefs.cleanliness) {
-            maxScore += 20;
+            const categoryMaxScore = 20;
+            maxScore += categoryMaxScore;
+            let categoryScore = 0;
+            let categoryNote = "";
+
             if (userPrefs.cleanliness === roommatePrefs.cleanliness) {
-                score += 20;
+                categoryScore = 20;
+                categoryNote = "Exact match";
             } else {
                 // Check for close matches
                 const cleanlinessLevels = [
@@ -280,19 +320,37 @@ const RoommateFinder = () => {
                     // Calculate how close they are (0 = exact, 3 = furthest)
                     const difference = Math.abs(userIndex - roommateIndex);
                     if (difference === 1) {
-                        score += 10; // Adjacent preferences
+                        categoryScore = 10;
+                        categoryNote = "Similar preferences (1 level difference)";
                     } else if (difference === 2) {
-                        score += 5;  // Two steps away
+                        categoryScore = 5;
+                        categoryNote = "Somewhat different preferences (2 levels difference)";
+                    } else {
+                        categoryNote = "Very different cleanliness preferences";
                     }
                 }
             }
+
+            score += categoryScore;
+            breakdown.cleanliness = {
+                yourPref: userPrefs.cleanliness,
+                theirPref: roommatePrefs.cleanliness,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Check visitors preference
         if (userPrefs.visitors && roommatePrefs.visitors) {
-            maxScore += 15;
+            const categoryMaxScore = 15;
+            maxScore += categoryMaxScore;
+            let categoryScore = 0;
+            let categoryNote = "";
+
             if (userPrefs.visitors === roommatePrefs.visitors) {
-                score += 15;
+                categoryScore = 15;
+                categoryNote = "Exact match";
             } else {
                 // Check for close matches
                 const visitorLevels = [
@@ -308,16 +366,29 @@ const RoommateFinder = () => {
                 if (userIndex !== -1 && roommateIndex !== -1) {
                     const difference = Math.abs(userIndex - roommateIndex);
                     if (difference === 1) {
-                        score += 7; // Adjacent preferences
+                        categoryScore = 7;
+                        categoryNote = "Similar visitor preferences";
+                    } else {
+                        categoryNote = "Different visitor preferences";
                     }
                 }
             }
+
+            score += categoryScore;
+            breakdown.visitors = {
+                yourPref: userPrefs.visitors,
+                theirPref: roommatePrefs.visitors,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Check interests
         if (userPrefs.interests && userPrefs.interests.length > 0 &&
             roommatePrefs.interests && roommatePrefs.interests.length > 0) {
-            maxScore += 25;
+            const categoryMaxScore = 25;
+            maxScore += categoryMaxScore;
 
             // Count matching interests
             const matchingInterests = userPrefs.interests.filter(interest =>
@@ -326,24 +397,62 @@ const RoommateFinder = () => {
 
             // Score based on percentage of user's interests that match
             const matchPercentage = matchingInterests.length / userPrefs.interests.length;
-            score += Math.round(25 * matchPercentage);
+            const categoryScore = Math.round(25 * matchPercentage);
+
+            let categoryNote = "";
+            if (matchingInterests.length === 0) {
+                categoryNote = "No shared interests";
+            } else if (matchingInterests.length === 1) {
+                categoryNote = "1 shared interest";
+            } else {
+                categoryNote = `${matchingInterests.length} shared interests`;
+            }
+
+            score += categoryScore;
+            breakdown.interests = {
+                yourInterests: userPrefs.interests,
+                theirInterests: roommatePrefs.interests,
+                sharedInterests: matchingInterests,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Check class year
         if (userYear && roommateYear) {
-            maxScore += 10;
+            const categoryMaxScore = 10;
+            maxScore += categoryMaxScore;
+            let categoryScore = 0;
+            let categoryNote = "";
+
             if (userYear === roommateYear) {
-                score += 10;
+                categoryScore = 10;
+                categoryNote = "Same class year";
+            } else {
+                categoryNote = "Different class years";
             }
+
+            score += categoryScore;
+            breakdown.classYear = {
+                yourYear: userYear,
+                theirYear: roommateYear,
+                score: categoryScore,
+                maxScore: categoryMaxScore,
+                note: categoryNote
+            };
         }
 
         // Calculate percentage (with minimum of 5% to avoid completely zero scores)
         const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 5;
 
-        // Return both the percentage and color class
+        // Return both the percentage, color class, and breakdown
         return {
             percentage,
-            colorClass: getScoreColorClass(percentage)
+            colorClass: getScoreColorClass(percentage),
+            score,
+            maxScore,
+            breakdown
         };
     };
 
@@ -355,6 +464,23 @@ const RoommateFinder = () => {
         if (score >= 20) return "bg-orange-400";
         return "bg-red-400";
     };
+
+    // Add this useEffect at the component level (not inside the conditional render)
+    // This will manage body scrolling when the modal is open
+    useEffect(() => {
+        if (showMatchDetailsModal) {
+            // Disable body scrolling when modal opens
+            document.body.style.overflow = 'hidden';
+        } else {
+            // Re-enable body scrolling when modal closes
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cleanup function to ensure body scrolling is re-enabled if component unmounts
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [showMatchDetailsModal]);
 
     // Update the section in the useEffect for filtering roommates to include similarity score
     useEffect(() => {
@@ -415,7 +541,8 @@ const RoommateFinder = () => {
                 return {
                     ...roommate,
                     similarityScore: similarityData.percentage,
-                    scoreColorClass: similarityData.colorClass
+                    scoreColorClass: similarityData.colorClass,
+                    similarityData: similarityData // Store the full data for the modal
                 };
             });
 
@@ -1580,10 +1707,20 @@ const RoommateFinder = () => {
                                                 {/* Similarity score badge */}
                                                 {roommate.similarityScore !== undefined && (
                                                     <div className="ml-3 flex items-center">
-                                                        <div className="flex items-center">
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedRoommateMatch({
+                                                                    name: `${roommate.firstName} ${roommate.lastName}`,
+                                                                    similarityData: roommate.similarityData
+                                                                });
+                                                                setShowMatchDetailsModal(true);
+                                                            }}
+                                                            className="flex items-center hover:bg-gray-100 px-2 py-1 rounded transition-colors cursor-pointer"
+                                                            title="Click to see match details"
+                                                        >
                                                             <div className={`h-4 w-4 rounded-full ${roommate.scoreColorClass} mr-1`}></div>
                                                             <span className="text-sm font-medium">{roommate.similarityScore}% match</span>
-                                                        </div>
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1712,6 +1849,254 @@ const RoommateFinder = () => {
                     </div>
                 )}
             </div>
+
+            {/* Match Details Modal - with improved scrolling and responsive design */}
+            {showMatchDetailsModal && selectedRoommateMatch && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-4 flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                            <h3 className="text-xl font-bold text-gray-900 truncate">
+                                Match Details with {selectedRoommateMatch.name}
+                            </h3>
+                            <button
+                                onClick={() => setShowMatchDetailsModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-grow">
+                            <div className="mb-4 flex items-center">
+                                <div className={`h-8 w-8 text-xs rounded-full ${selectedRoommateMatch.similarityData.colorClass} mr-3 flex items-center justify-center text-white font-bold`}>
+                                    {selectedRoommateMatch.similarityData.percentage}%
+                                </div>
+                                <div>
+                                    <p className="text-lg font-semibold">Overall Compatibility Score</p>
+                                    <p className="text-sm text-gray-600">Based on {selectedRoommateMatch.similarityData.maxScore} possible points</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 mt-6">
+                                {/* Study Habits */}
+                                {selectedRoommateMatch.similarityData.breakdown.studyHabits && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Study Habits</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.studyHabits.score} / {selectedRoommateMatch.similarityData.breakdown.studyHabits.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.studyHabits.score / selectedRoommateMatch.similarityData.breakdown.studyHabits.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.studyHabits.score / selectedRoommateMatch.similarityData.breakdown.studyHabits.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            <div className="bg-blue-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-blue-700 font-medium">Your preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.studyHabits.yourPref}</p>
+                                            </div>
+                                            <div className="bg-green-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-green-700 font-medium">Their preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.studyHabits.theirPref}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.studyHabits.note}</p>
+                                    </div>
+                                )}
+
+                                {/* Sleep Schedule */}
+                                {selectedRoommateMatch.similarityData.breakdown.sleepSchedule && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Sleep Schedule</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.sleepSchedule.score} / {selectedRoommateMatch.similarityData.breakdown.sleepSchedule.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.sleepSchedule.score / selectedRoommateMatch.similarityData.breakdown.sleepSchedule.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.sleepSchedule.score / selectedRoommateMatch.similarityData.breakdown.sleepSchedule.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            <div className="bg-blue-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-blue-700 font-medium">Your preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.sleepSchedule.yourPref}</p>
+                                            </div>
+                                            <div className="bg-green-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-green-700 font-medium">Their preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.sleepSchedule.theirPref}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.sleepSchedule.note}</p>
+                                    </div>
+                                )}
+
+                                {/* Cleanliness */}
+                                {selectedRoommateMatch.similarityData.breakdown.cleanliness && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Cleanliness</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.cleanliness.score} / {selectedRoommateMatch.similarityData.breakdown.cleanliness.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.cleanliness.score / selectedRoommateMatch.similarityData.breakdown.cleanliness.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.cleanliness.score / selectedRoommateMatch.similarityData.breakdown.cleanliness.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            <div className="bg-blue-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-blue-700 font-medium">Your preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.cleanliness.yourPref}</p>
+                                            </div>
+                                            <div className="bg-green-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-green-700 font-medium">Their preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.cleanliness.theirPref}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.cleanliness.note}</p>
+                                    </div>
+                                )}
+
+                                {/* Visitors */}
+                                {selectedRoommateMatch.similarityData.breakdown.visitors && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Visitors Preference</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.visitors.score} / {selectedRoommateMatch.similarityData.breakdown.visitors.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.visitors.score / selectedRoommateMatch.similarityData.breakdown.visitors.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.visitors.score / selectedRoommateMatch.similarityData.breakdown.visitors.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            <div className="bg-blue-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-blue-700 font-medium">Your preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.visitors.yourPref}</p>
+                                            </div>
+                                            <div className="bg-green-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-green-700 font-medium">Their preference</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.visitors.theirPref}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.visitors.note}</p>
+                                    </div>
+                                )}
+
+                                {/* Interests */}
+                                {selectedRoommateMatch.similarityData.breakdown.interests && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Common Interests</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.interests.score} / {selectedRoommateMatch.similarityData.breakdown.interests.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.interests.score / selectedRoommateMatch.similarityData.breakdown.interests.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.interests.score / selectedRoommateMatch.similarityData.breakdown.interests.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                                            <div>
+                                                <p className="text-xs text-blue-700 font-medium mb-1">Your interests ({selectedRoommateMatch.similarityData.breakdown.interests.yourInterests.length})</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedRoommateMatch.similarityData.breakdown.interests.yourInterests.map(interest => (
+                                                        <span key={interest} className={`px-2 py-0.5 rounded-full text-xs ${selectedRoommateMatch.similarityData.breakdown.interests.sharedInterests.includes(interest)
+                                                            ? 'bg-blue-100 text-blue-800'
+                                                            : 'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                            {interest}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-green-700 font-medium mb-1">Their interests ({selectedRoommateMatch.similarityData.breakdown.interests.theirInterests.length})</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedRoommateMatch.similarityData.breakdown.interests.theirInterests.map(interest => (
+                                                        <span key={interest} className={`px-2 py-0.5 rounded-full text-xs ${selectedRoommateMatch.similarityData.breakdown.interests.sharedInterests.includes(interest)
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                            {interest}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.interests.note}</p>
+                                    </div>
+                                )}
+
+                                {/* Class Year */}
+                                {selectedRoommateMatch.similarityData.breakdown.classYear && (
+                                    <div className="border border-gray-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="font-semibold text-gray-800">Class Year</h4>
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium mr-2">
+                                                    {selectedRoommateMatch.similarityData.breakdown.classYear.score} / {selectedRoommateMatch.similarityData.breakdown.classYear.maxScore}
+                                                </span>
+                                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`${getScoreColorClass(selectedRoommateMatch.similarityData.breakdown.classYear.score / selectedRoommateMatch.similarityData.breakdown.classYear.maxScore * 100)} h-2 rounded-full`}
+                                                        style={{ width: `${(selectedRoommateMatch.similarityData.breakdown.classYear.score / selectedRoommateMatch.similarityData.breakdown.classYear.maxScore) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            <div className="bg-blue-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-blue-700 font-medium">Your class year</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.classYear.yourYear}</p>
+                                            </div>
+                                            <div className="bg-green-50 p-2 rounded text-sm">
+                                                <p className="text-xs text-green-700 font-medium">Their class year</p>
+                                                <p className="text-gray-800">{selectedRoommateMatch.similarityData.breakdown.classYear.theirYear}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{selectedRoommateMatch.similarityData.breakdown.classYear.note}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-200 flex justify-end">
+                            <button
+                                onClick={() => setShowMatchDetailsModal(false)}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-black py-2 px-4 rounded-md font-semibold transition duration-200"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
