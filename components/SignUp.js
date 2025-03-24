@@ -200,7 +200,7 @@ const SignUp = () => {
       {/* Footer */}
       <div className="w-full max-w-md text-center mt-6">
         <p className="text-yellow-100 text-sm">
-          &copy; {new Date().getFullYear()} WakeRooms | <a href="#" className="text-yellow-200 hover:text-white">Privacy Policy</a> | <a href="#" className="text-yellow-200 hover:text-white">Terms of Service</a>
+          &copy; {new Date().getFullYear()} WakeRooms | <a href="/privacy-policy" className="text-yellow-200 hover:text-white">Privacy Policy</a> | <a href="/terms-of-service" className="text-yellow-200 hover:text-white">Terms of Service</a>
         </p>
       </div>
     </div>
