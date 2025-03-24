@@ -258,7 +258,6 @@ const HousingManagement = () => {
             const roomId = crypto.randomUUID(); // Or use a library like nanoid or uuid
 
             await updateDoc(doc(db, 'dorms', currentDorm.id), {
-
                 totalRooms: increment(1),
                 availableRooms: increment(1)
             });
@@ -403,6 +402,7 @@ const HousingManagement = () => {
                 // Update room to remove all occupants
                 batch.update(roomRef, {
                     occupants: [],
+                    occupancyStatus: "available",
                     updatedAt: serverTimestamp()
                 });
 
@@ -413,6 +413,10 @@ const HousingManagement = () => {
                         selectedRoom: null
                     });
                 }
+
+                await updateDoc(doc(db, 'dorms', dormId), {
+                    availableRooms: increment(1)
+                });
 
                 // Commit all changes
                 await batch.commit();
