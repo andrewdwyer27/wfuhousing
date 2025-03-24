@@ -161,158 +161,6 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* Features Section */}
-                <div id="features" className="py-16 bg-white overflow-hidden lg:py-24">
-                    <div className="relative max-w-xl mx-auto px-4 sm:px-6 lg:px-8 lg:max-w-7xl">
-                        <div className="relative">
-                            <h2 className="text-center text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                                Features Built for Wake Forest Students
-                            </h2>
-                            <p className="mt-4 max-w-3xl mx-auto text-center text-xl text-gray-500">
-                                Everything you need to find your ideal living situation on campus.
-                            </p>
-                        </div>
-
-                        <div className="relative mt-12 lg:mt-24 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                            <div className="relative">
-                                <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight sm:text-3xl">
-                                    Personalized Roommate Matching
-                                </h3>
-                                <p className="mt-3 text-lg text-gray-500">
-                                    Our advanced algorithm helps you find roommates who match your living preferences, study habits, and personal interests.
-                                </p>
-
-                                <dl className="mt-10 space-y-10">
-                                    <div className="relative">
-                                        <dt>
-                                            <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                            </div>
-                                            <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Compatibility Questionnaire</p>
-                                        </dt>
-                                        <dd className="mt-2 ml-16 text-base text-gray-500">
-                                            Answer questions about your lifestyle, habits, and preferences to find your perfect match.
-                                        </dd>
-                                    </div>
-
-                                    <div className="relative">
-                                        <dt>
-                                            <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                                </svg>
-                                            </div>
-                                            <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Direct Messaging</p>
-                                        </dt>
-                                        <dd className="mt-2 ml-16 text-base text-gray-500">
-                                            Chat with potential roommates to get to know them better before making your decision.
-                                        </dd>
-                                    </div>
-
-                                    <div className="relative">
-                                        <dt>
-                                            <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                </svg>
-                                            </div>
-                                            <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Verified Profiles</p>
-                                        </dt>
-                                        <dd className="mt-2 ml-16 text-base text-gray-500">
-                                            All users verify their Wake Forest email address for a safe and trusted community.
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </div>
-
-                            <div className="mt-10 -mx-4 relative lg:mt-0" aria-hidden="true">
-                                <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
-                                    <div className="relative block w-full bg-yellow-600 rounded-lg overflow-hidden">
-                                        <span className="sr-only">Watch our video to learn more</span>
-                                        <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                                            <span className="text-gray-500">Roommate Finder Demo Screenshot</span>
-                                        </div>
-                                        <div className="absolute inset-0 w-full h-full flex items-center justify-center">
-                                            <svg className="h-20 w-20 text-yellow-500" fill="currentColor" viewBox="0 0 84 84">
-                                                <circle opacity="0.9" cx="42" cy="42" r="42" fill="white" />
-                                                <path d="M55 42L35 55V29L55 42Z" fill="currentColor" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="relative mt-12 sm:mt-16 lg:mt-24">
-                            <div className="lg:grid lg:grid-flow-row-dense lg:grid-cols-2 lg:gap-8 lg:items-center">
-                                <div className="lg:col-start-2">
-                                    <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight sm:text-3xl">
-                                        Interactive Dorm Selection
-                                    </h3>
-                                    <p className="mt-3 text-lg text-gray-500">
-                                        Browse dorm options, view room layouts, and select the perfect housing arrangement for you and your roommate.
-                                    </p>
-
-                                    <dl className="mt-10 space-y-10">
-                                        <div className="relative">
-                                            <dt>
-                                                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                    <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                    </svg>
-                                                </div>
-                                                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Virtual Dorm Tours</p>
-                                            </dt>
-                                            <dd className="mt-2 ml-16 text-base text-gray-500">
-                                                Explore dorm buildings and room layouts with 360° virtual tours and detailed floor plans.
-                                            </dd>
-                                        </div>
-
-                                        <div className="relative">
-                                            <dt>
-                                                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                    <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                </div>
-                                                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Real-Time Availability</p>
-                                            </dt>
-                                            <dd className="mt-2 ml-16 text-base text-gray-500">
-                                                See which rooms are available in real-time during your selection window.
-                                            </dd>
-                                        </div>
-
-                                        <div className="relative">
-                                            <dt>
-                                                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
-                                                    <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                    </svg>
-                                                </div>
-                                                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Synchronized Selection</p>
-                                            </dt>
-                                            <dd className="mt-2 ml-16 text-base text-gray-500">
-                                                Coordinate your room selection with your roommate directly through the platform.
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                </div>
-
-                                <div className="mt-10 -mx-4 relative lg:mt-0 lg:col-start-1">
-                                    <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
-                                        <div className="relative block w-full bg-white rounded-lg overflow-hidden">
-                                            <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                                                <span className="text-gray-500">Dorm Selection Interface Screenshot</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 {/* How It Works */}
                 <div id="how-it-works" className="bg-gray-50 py-16 lg:py-24">
@@ -446,15 +294,14 @@ export default function Home() {
                             <div className="bg-white p-6 rounded-lg shadow-sm">
                                 <h3 className="text-lg font-medium text-gray-900">When should I start looking for a roommate?</h3>
                                 <p className="mt-2 text-base text-gray-500">
-                                    We recommend starting your search at least 2-3 months before housing selection begins to give yourself plenty
-                                // This continues the code from where the previous document left off
+                                    We recommend starting your search at least 2-3 months before housing selection begins to give yourself plenty of time.
                                 </p>
                             </div>
 
                             <div className="bg-white p-6 rounded-lg shadow-sm">
                                 <h3 className="text-lg font-medium text-gray-900">How does the matching algorithm work?</h3>
                                 <p className="mt-2 text-base text-gray-500">
-                                    Our algorithm analyzes over 20 different compatibility factors including study habits, sleep schedules, cleanliness preferences, social tendencies, and shared interests to find your most compatible roommate matches.
+                                    Our algorithm analyzes 5 different compatibility factors including study habits, sleep schedules, cleanliness preferences, social tendencies, and shared interests to find your most compatible roommate matches.
                                 </p>
                             </div>
 
@@ -545,36 +392,22 @@ export default function Home() {
                             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Support</h3>
                             <ul className="mt-4 space-y-4">
                                 <li>
-                                    <a href="#" className="text-base text-gray-300 hover:text-white">Help Center</a>
+                                    <Link href="/help-center" className="text-base text-gray-300 hover:text-white">Help Center</Link>
                                 </li>
                                 <li>
-                                    <a href="#" className="text-base text-gray-300 hover:text-white">Contact Us</a>
+                                    <Link href="/contact" className="text-base text-gray-300 hover:text-white">Contact Us</Link>
                                 </li>
                                 <li>
-                                    <a href="#" className="text-base text-gray-300 hover:text-white">Privacy Policy</a>
+                                    <Link href="/privacy-policy" className="text-base text-gray-300 hover:text-white">Privacy Policy</Link>
                                 </li>
                                 <li>
-                                    <a href="#" className="text-base text-gray-300 hover:text-white">Terms of Service</a>
+                                    <Link href="/terms-of-service" className="text-base text-gray-300 hover:text-white">Terms of Service</Link>
                                 </li>
                             </ul>
                         </div>
                     </div>
 
                     <div className="mt-8 border-t border-gray-700 pt-8 md:flex md:items-center md:justify-between">
-                        <div className="flex space-x-6 md:order-2">
-                            <a href="#" className="text-gray-400 hover:text-gray-300">
-                                <span className="sr-only">Email</span>
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-gray-300">
-                                <span className="sr-only">Phone</span>
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                            </a>
-                        </div>
                         <p className="mt-8 text-base text-gray-400 md:mt-0 md:order-1">
                             &copy; {new Date().getFullYear()} WakeRooms. All rights reserved.
                         </p>
