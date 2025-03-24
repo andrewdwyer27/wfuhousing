@@ -229,6 +229,203 @@ const RoommateFinder = () => {
         setFilteredRoommates(result);
     }, [potentialRoommates, filterOptions]);
 
+    // Add this new function after the clearFilters function
+    // Calculate similarity score between user and potential roommate
+    const calculateSimilarityScore = (userPrefs, roommatePrefs, userYear, roommateYear) => {
+        let score = 0;
+        let maxScore = 0;
+
+        // Check study habits
+        if (userPrefs.studyHabits && roommatePrefs.studyHabits) {
+            maxScore += 20;
+            if (userPrefs.studyHabits === roommatePrefs.studyHabits) {
+                score += 20;
+            } else if (
+                (userPrefs.studyHabits === "I can study anywhere" ||
+                    roommatePrefs.studyHabits === "I can study anywhere")
+            ) {
+                score += 10; // Partial match for flexible study habits
+            }
+        }
+
+        // Check sleep schedule
+        if (userPrefs.sleepSchedule && roommatePrefs.sleepSchedule) {
+            maxScore += 20;
+            if (userPrefs.sleepSchedule === roommatePrefs.sleepSchedule) {
+                score += 20;
+            } else if (userPrefs.sleepSchedule === "Varies day to day" ||
+                roommatePrefs.sleepSchedule === "Varies day to day") {
+                score += 5; // Small bonus for flexibility
+            }
+        }
+
+        // Check cleanliness
+        if (userPrefs.cleanliness && roommatePrefs.cleanliness) {
+            maxScore += 20;
+            if (userPrefs.cleanliness === roommatePrefs.cleanliness) {
+                score += 20;
+            } else {
+                // Check for close matches
+                const cleanlinessLevels = [
+                    "Very neat and organized",
+                    "Generally neat",
+                    "Casual, clean when needed",
+                    "Not very concerned with tidiness"
+                ];
+
+                const userIndex = cleanlinessLevels.indexOf(userPrefs.cleanliness);
+                const roommateIndex = cleanlinessLevels.indexOf(roommatePrefs.cleanliness);
+
+                if (userIndex !== -1 && roommateIndex !== -1) {
+                    // Calculate how close they are (0 = exact, 3 = furthest)
+                    const difference = Math.abs(userIndex - roommateIndex);
+                    if (difference === 1) {
+                        score += 10; // Adjacent preferences
+                    } else if (difference === 2) {
+                        score += 5;  // Two steps away
+                    }
+                }
+            }
+        }
+
+        // Check visitors preference
+        if (userPrefs.visitors && roommatePrefs.visitors) {
+            maxScore += 15;
+            if (userPrefs.visitors === roommatePrefs.visitors) {
+                score += 15;
+            } else {
+                // Check for close matches
+                const visitorLevels = [
+                    "Often have visitors/friends over",
+                    "Occasionally have visitors",
+                    "Only on weekends",
+                    "Rarely have visitors"
+                ];
+
+                const userIndex = visitorLevels.indexOf(userPrefs.visitors);
+                const roommateIndex = visitorLevels.indexOf(roommatePrefs.visitors);
+
+                if (userIndex !== -1 && roommateIndex !== -1) {
+                    const difference = Math.abs(userIndex - roommateIndex);
+                    if (difference === 1) {
+                        score += 7; // Adjacent preferences
+                    }
+                }
+            }
+        }
+
+        // Check interests
+        if (userPrefs.interests && userPrefs.interests.length > 0 &&
+            roommatePrefs.interests && roommatePrefs.interests.length > 0) {
+            maxScore += 25;
+
+            // Count matching interests
+            const matchingInterests = userPrefs.interests.filter(interest =>
+                roommatePrefs.interests.includes(interest)
+            );
+
+            // Score based on percentage of user's interests that match
+            const matchPercentage = matchingInterests.length / userPrefs.interests.length;
+            score += Math.round(25 * matchPercentage);
+        }
+
+        // Check class year
+        if (userYear && roommateYear) {
+            maxScore += 10;
+            if (userYear === roommateYear) {
+                score += 10;
+            }
+        }
+
+        // Calculate percentage (with minimum of 5% to avoid completely zero scores)
+        const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 5;
+
+        // Return both the percentage and color class
+        return {
+            percentage,
+            colorClass: getScoreColorClass(percentage)
+        };
+    };
+
+    // Helper function to determine the color class based on score
+    const getScoreColorClass = (score) => {
+        if (score >= 80) return "bg-green-500";
+        if (score >= 60) return "bg-green-400";
+        if (score >= 40) return "bg-yellow-400";
+        if (score >= 20) return "bg-orange-400";
+        return "bg-red-400";
+    };
+
+    // Update the section in the useEffect for filtering roommates to include similarity score
+    useEffect(() => {
+        let result = [...potentialRoommates];
+
+        // Filter by class year
+        if (filterOptions.classYear) {
+            result = result.filter(roommate => roommate.classYear === filterOptions.classYear);
+        }
+
+        // Filter by study habits
+        if (filterOptions.studyHabits) {
+            result = result.filter(roommate =>
+                roommate.roommatePreferences?.studyHabits === filterOptions.studyHabits
+            );
+        }
+
+        // Filter by sleep schedule
+        if (filterOptions.sleepSchedule) {
+            result = result.filter(roommate =>
+                roommate.roommatePreferences?.sleepSchedule === filterOptions.sleepSchedule
+            );
+        }
+
+        // Filter by cleanliness
+        if (filterOptions.cleanliness) {
+            result = result.filter(roommate =>
+                roommate.roommatePreferences?.cleanliness === filterOptions.cleanliness
+            );
+        }
+
+        // Filter by visitors preference
+        if (filterOptions.visitors) {
+            result = result.filter(roommate =>
+                roommate.roommatePreferences?.visitors === filterOptions.visitors
+            );
+        }
+
+        // Filter by interests
+        if (filterOptions.interests && filterOptions.interests.length > 0) {
+            result = result.filter(roommate =>
+                filterOptions.interests.every(interest =>
+                    roommate.roommatePreferences?.interests?.includes(interest)
+                )
+            );
+        }
+
+        // Add similarity scores to the filtered roommates
+        if (user && user.roommatePreferences) {
+            result = result.map(roommate => {
+                const similarityData = calculateSimilarityScore(
+                    user.roommatePreferences,
+                    roommate.roommatePreferences,
+                    user.classYear,
+                    roommate.classYear
+                );
+
+                return {
+                    ...roommate,
+                    similarityScore: similarityData.percentage,
+                    scoreColorClass: similarityData.colorClass
+                };
+            });
+
+            // Sort by similarity score (highest first)
+            result.sort((a, b) => b.similarityScore - a.similarityScore);
+        }
+
+        setFilteredRoommates(result);
+    }, [potentialRoommates, filterOptions, user]);
+
     // Handle filter changes
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -1377,7 +1574,19 @@ const RoommateFinder = () => {
                                 {filteredRoommates.map(roommate => (
                                     <div key={roommate.uid} className="border border-gray-200 p-5 rounded-lg hover:shadow-md transition duration-200">
                                         <div className="flex justify-between items-start mb-3">
-                                            <h3 className="font-bold text-lg text-gray-900">{roommate.firstName} {roommate.lastName}</h3>
+                                            <div className="flex items-center">
+                                                <h3 className="font-bold text-lg text-gray-900">{roommate.firstName} {roommate.lastName}</h3>
+
+                                                {/* Similarity score badge */}
+                                                {roommate.similarityScore !== undefined && (
+                                                    <div className="ml-3 flex items-center">
+                                                        <div className="flex items-center">
+                                                            <div className={`h-4 w-4 rounded-full ${roommate.scoreColorClass} mr-1`}></div>
+                                                            <span className="text-sm font-medium">{roommate.similarityScore}% match</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <button
                                                 onClick={() => sendRequest(roommate)}
                                                 className="bg-yellow-600 hover:bg-yellow-700 text-black py-2 px-4 rounded-md font-semibold text-sm transition duration-200 flex items-center"
@@ -1419,8 +1628,8 @@ const RoommateFinder = () => {
                                                     <p className="text-sm flex items-center">
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                                                            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                                                            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
                                                         </svg>
                                                         <span className="font-semibold text-gray-700">Class Year:</span> <span className="ml-1">{roommate.classYear}</span>
                                                     </p>
