@@ -336,15 +336,22 @@ const HousingManagement = () => {
                 // First check if any users are assigned to this room
                 const dorm = dorms.find(d => d.id === dormId);
                 const room = dorm?.rooms.find(r => r.id === roomId);
-
+                
+                let roomWasAvailable = false;
+                
+                // Check if the room was available (no occupants)
+                if (room && (!room.occupants || room.occupants.length === 0)) {
+                    roomWasAvailable = true;
+                }
+    
                 if (room && room.occupants && room.occupants.length > 0) {
                     if (!window.confirm('This room has occupants. Deleting it will remove room assignments for these users. Continue?')) {
                         return;
                     }
-
+    
                     // Remove room assignments for all users in this room
                     const batch = writeBatch(db);
-
+    
                     for (const user of users) {
                         if (user.selectedRoom &&
                             user.selectedRoom.dormId === dormId &&
@@ -354,19 +361,25 @@ const HousingManagement = () => {
                             });
                         }
                     }
-
+    
                     await batch.commit();
                 }
-
+    
                 // Now delete the room
                 await deleteDoc(doc(db, 'dorms', dormId, 'rooms', roomId));
-
-                // Decrement the totalRooms counter in the dorm document
-                await updateDoc(doc(db, 'dorms', dormId), {
-                    totalRooms: increment(-1),
-                    availableRooms: increment(-1)
-                });
-
+    
+                // Always decrement totalRooms, but only decrement availableRooms if the room was available
+                if (roomWasAvailable) {
+                    await updateDoc(doc(db, 'dorms', dormId), {
+                        totalRooms: increment(-1),
+                        availableRooms: increment(-1)
+                    });
+                } else {
+                    await updateDoc(doc(db, 'dorms', dormId), {
+                        totalRooms: increment(-1)
+                    });
+                }
+    
                 await fetchDormsAndUsers();
             } catch (err) {
                 console.error('Error deleting room:', err);
