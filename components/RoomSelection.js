@@ -901,6 +901,20 @@ const RoomSelection = () => {
                                                         </svg>
                                                         Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'people'}
                                                     </p>
+                                                    <p className="text-gray-700 flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3 0v6m0-6V6m0 12h6a2 2 0 002-2v-5a2 2 0 00-2-2H6a2 2 0 00-2 2v5a2 2 0 002 2h6z" />
+                                                        </svg>
+                                                        <span className="capitalize">Bathrooms: {room.bathrooms}</span>
+                                                    </p>
+
+                                                    <p className="text-gray-700 flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-5-3.9M9 20H4v-2a4 4 0 015-3.9M12 12a4 4 0 100-8 4 4 0 000 8z" />
+                                                        </svg>
+                                                        <span>{room.sharedLiving ? 'Shared living' : 'Private living'}</span>
+                                                    </p>
+
                                                 </div>
 
                                                 {groupSelection && (
