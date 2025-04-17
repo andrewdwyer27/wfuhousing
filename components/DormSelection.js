@@ -32,33 +32,12 @@ const DormSelection = () => {
                         // Use demo data if no dorms in Firestore
                         setDorms([
                             {
-                                id: 'magnolia',
-                                name: 'Magnolia Residence Hall',
-                                description: 'Modern suite-style residence hall with a variety of room configurations.',
-                                totalRooms: 175,
-                                availableRooms: 87
+                                id: 'noDorms',
+                                name: 'No dorms yet! Check back soon.',
+                                description: '',
+                                totalRooms: 0,
+                                availableRooms: 0
                             },
-                            {
-                                id: 'taylor',
-                                name: 'Taylor Residence Hall',
-                                description: 'Traditional style residence hall centrally located on campus.',
-                                totalRooms: 120,
-                                availableRooms: 52
-                            },
-                            {
-                                id: 'collins',
-                                name: 'Collins Residence Hall',
-                                description: 'Apartment-style living for upperclassmen with private kitchens and bathrooms.',
-                                totalRooms: 90,
-                                availableRooms: 41
-                            },
-                            {
-                                id: 'bostwick',
-                                name: 'Bostwick Residence Hall',
-                                description: 'Historic residence hall with traditional double rooms.',
-                                totalRooms: 110,
-                                availableRooms: 65
-                            }
                         ]);
                     }
 
